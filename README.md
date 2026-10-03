@@ -9,10 +9,14 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)](package.json)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](package.json)
-[![Tests](https://img.shields.io/badge/tests-140%20passing-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-150%20passing-brightgreen)](tests)
 [![Works with](https://img.shields.io/badge/works%20with-Claude%20Code%20·%20Codex%20·%20Cursor%20·%20OpenCode%20·%20Antigravity-8A2BE2)](#-works-with)
 
 [Quick start](#-quick-start) · [How it works](#-how-it-works) · [Features](#-features) · [Docs](#-docs) · [FAQ](#-faq)
+
+<img src="docs/assets/swarm-map.png" alt="The baton swarm map: four agents across two repos, each worktree with its checkpoint state and a reviewer from a different model family" width="900">
+
+<sub>The swarm map: live agents, their worktrees, checkpoint state (live, dirty, blocked) and each one's cross-family reviewer.</sub>
 
 </div>
 
@@ -28,14 +32,14 @@ You're running more than one AI coding agent. Then this happens:
 - 💥 **Two agents edit the same folder.** Or a cleanup script deletes a worktree an agent was still using.
 - 🚀 **An agent "helpfully" deploys to production.**
 
-**baton is the relay protocol that fixes this.** It's a small, zero-dependency Node toolkit that sits beside the agents you already use — it doesn't replace them, wrap them, or need an account.
+**baton is the relay protocol that fixes this.** It's a small, zero-dependency Node toolkit that sits beside the agents you already use. It doesn't replace them, wrap them, or need an account, and it runs on macOS, Linux and Windows.
 
 ## ✨ Features
 
 | | |
 |---|---|
 | 📍 **Checkpoints, not chat history** | Every agent writes `checkpoint.json` each loop — goal, what's proven, what's blocked, the exact next step. A successor resumes from the file, not a dead conversation. |
-| 🔀 **Cross-model routing** | A roster of seats (writer, reviewer, apex reviewer, bulk, research) with tiers and model families. baton picks the writer and a reviewer **from a different model family**. Deterministic — no LLM picks who does the work. |
+| 🔀 **Cross-model routing** | A roster of seats (writer, reviewer, apex reviewer, bulk, research) with tiers and model families. baton picks the writer and a reviewer **from a different model family**. Deterministic: no LLM picks who does the work. Classification runs offline by default; plug in [TypeSafe](https://typesafe.ai) for sharper answers. |
 | 🪫 **Credit-death fallbacks** | Mark a credit pool as out until a date. Its seats are skipped; baton walks the fallback chain **sideways or down a tier, never up**, and an unavailable model never blocks the work. |
 | 🧾 **Completion gate** | `done` requires a receipt: real command output, a negative control, the right reviews bound to a commit SHA. Claims of production deploys get flagged as a singleton breach. |
 | 🌳 **Worktree safety** | One writer per git worktree. One script gives every fresh worktree the main checkout's dependencies and local config. The prune guard **never** deletes a worktree with an agent in it. |
@@ -67,7 +71,7 @@ flowchart LR
 
 ## 🚀 Quick start
 
-Requires **Node 20+** and git. (The worktree setup script also needs PowerShell 7.)
+Requires **Node 20+** and git. That's it.
 
 ```bash
 git clone https://github.com/immy2good/baton && cd baton
@@ -84,11 +88,19 @@ node scripts/agents.mjs list
 node scripts/agents.mjs done --id claude-1
 ```
 
-**Route an issue** (classification uses a [TypeSafe](https://typesafe.ai) key in `TYPESAFE_API_KEY`; the routing itself is local and deterministic):
+**Route an issue.** Works offline out of the box; set `TYPESAFE_API_KEY` to classify with [TypeSafe](https://typesafe.ai) instead of local keywords:
 
 ```bash
 node scripts/dispatch-triage.mjs "Fix rounding in the refund calculation"
+#   Domain:              critical_systems (confidence: 1)
+#   Risk Score:          3 / 3.0
+#   Assigned Writer:     T2 Implementer (Opus 5 medium) [T2]
+#   Reviewer:            Cross-model Reviewer (DeepSeek V4 Pro, plan)
+#   Apex Review Needed:  YES
+#   Classifier:          offline-keywords
 ```
+
+Vague tickets aren't guessed at: low confidence escalates to you instead of routing.
 
 **Gate a completion receipt** (the bundled example is deliberately weak, and gets rejected):
 
@@ -156,7 +168,10 @@ No. baton never runs a model. It's the protocol and guardrails *between* the age
 No. The default launcher is a folder of JSON files. Paseo is detected automatically if you have it.
 
 **Do I need the TypeSafe key?**
-Only for automatic issue classification. Routing, fallbacks, the receipt gate, checkpoints and worktree tools all work offline.
+No. Issue classification runs offline with a keyword classifier that escalates when unsure. A [TypeSafe](https://typesafe.ai) key gives sharper classification and powers the receipt gate's semantic checks. Routing, fallbacks, checkpoints and worktree tools never need it.
+
+**Does it work on macOS and Linux?**
+Yes. Everything is Node. Worktree setup lines run in `sh` on macOS/Linux and PowerShell on Windows, and you pick per repo.
 
 **Why "a reviewer from a different family"?**
 A model reviewing its own family's code shares its blind spots. baton enforces writer ≠ reviewer *family*, not just writer ≠ reviewer.
@@ -167,13 +182,13 @@ Proof the test catches the bug: revert the fix, watch the test fail, restore it,
 ## 🧪 Tests
 
 ```bash
-npm test               # 140 unit tests; live TypeSafe tests skip without a key
-npm run test:worktree  # end-to-end worktree setup fixture (needs pwsh, jq)
+npm test               # unit tests; live TypeSafe tests skip without a key
+npm run test:worktree  # end-to-end worktree setup check in a scratch repo
 ```
 
 ## 🤲 Contributing
 
-Issues and PRs welcome — especially new [launchers](docs/LAUNCHERS.md) and harness adapters (`src/lib/adapters/`). Keep it zero-dependency, add a test, and show it failing before your fix.
+Issues and PRs welcome, especially new [launchers](docs/LAUNCHERS.md) and harness adapters (`src/lib/adapters/`). See [CONTRIBUTING.md](CONTRIBUTING.md): zero dependencies, and every change comes with a test you've seen fail.
 
 ## 📄 Licence
 

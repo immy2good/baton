@@ -7,6 +7,7 @@ import { countActiveNodes } from '../src/lib/capacity.mjs';
 import { loadRoster, resolveDispatch, formatReviewDiamond } from '../src/lib/roster.mjs';
 import { formatTwoLineSummary } from '../src/lib/preflight.mjs';
 import { identifyTouchedContracts } from '../src/lib/contract-lint.mjs';
+import { classify } from '../src/lib/offline-classify.mjs';
 
 /**
  * CLI tool for evaluating an incoming issue and naming the writer and reviewers.
@@ -22,6 +23,7 @@ async function main() {
     issue: { type: 'string', short: 'i' },
     author: { type: 'string', short: 'a' },
     'active-nodes': { type: 'string' },
+    offline: { type: 'boolean', default: false },
     json: { type: 'boolean', short: 'j', default: false },
     help: { type: 'boolean', short: 'h', default: false }
   };
@@ -48,6 +50,8 @@ Options:
       --active-nodes  How many agents are already working. Omitted, it is counted
                       live from the launcher. At or over routing.max_active_nodes the
                       result is flagged at_capacity -- a queue signal, not a block.
+      --offline  Classify with local keywords even if TYPESAFE_API_KEY is set
+                 (used automatically when no key is set)
   -j, --json     Output pure JSON for programmatic use
   -h, --help     Show this help message
 `);
@@ -82,7 +86,7 @@ Options:
     )
   };
 
-  const { answers, latencyMs, usage } = await queryJev(state, questions);
+  const { answers, latencyMs, usage, model } = await classify(state, questions, { offline: values.offline });
 
   const riskScore = answers.risk_score.score;
 
@@ -104,7 +108,7 @@ Options:
       touched_contracts: identifyTouchedContracts(`${title} ${desc}`),
       writer: null,
       reviewer: null,
-      meta: { latency_ms: latencyMs, tokens_in: usage.input_tokens, tokens_out: usage.output_tokens }
+      meta: { classifier: model, latency_ms: latencyMs, tokens_in: usage.input_tokens, tokens_out: usage.output_tokens }
     };
     if (values.json) {
       console.log(JSON.stringify(escalated, null, 2));
@@ -166,6 +170,7 @@ Options:
     // whatever effort the launcher defaults to, because nothing downstream carries one.
     review_diamond: formatReviewDiamond(dispatch),
     meta: {
+      classifier: model,
       roster_source: dispatch.roster_source,
       latency_ms: latencyMs,
       tokens_in: usage.input_tokens,
@@ -202,6 +207,7 @@ Options:
     console.log(`Family Split Valid:  ${result.review_diamond.family_split_valid}`);
     console.log(`Roster Source:       ${result.meta.roster_source}`);
     console.log(`Active Nodes:        ${activeNodes ?? 'unknown (launcher unreadable)'} / ${dispatch.max_active_nodes}${dispatch.at_capacity ? '  -- AT CAPACITY, queue this' : ''}`);
+    console.log(`Classifier:          ${model}${model === 'offline-keywords' ? ' (no TYPESAFE_API_KEY, or --offline)' : ''}`);
     console.log(`Evaluation Latency:  ${latencyMs}ms (${usage.input_tokens} tokens in, ${usage.output_tokens} tokens out)`);
 
     const briefSummary = formatTwoLineSummary({

@@ -4,27 +4,49 @@
 
 ## One source of truth per repo: `baton.json → worktree.setup`
 
-Each repo lists its setup lines once. `scripts/worktree-setup.ps1` runs them from inside any linked worktree:
+Each repo lists its setup lines once. `scripts/worktree-setup.mjs` runs them from inside any linked worktree, on macOS, Linux and Windows:
 
 | Worktree created by | What runs the setup |
 |---|---|
-| Claude Code `claude --worktree <name>` | `SessionStart` hook → `scripts/hooks/worktree-setup-hook.sh` |
+| Claude Code `claude --worktree <name>` | `SessionStart` hook → `scripts/hooks/worktree-setup-hook.mjs` |
 | Claude Code `EnterWorktree` | `PostToolUse` hook (matcher `EnterWorktree`) → same |
 | Claude subagent `isolation: worktree` | **Files only**, via `.worktreeinclude`. No hook fires for these, so dependencies are not installed. |
-| `git worktree add` by hand, or any other tool | `pwsh -File <baton>/scripts/worktree-setup.ps1` from inside the worktree |
+| `git worktree add` by hand, or any other tool | `node <baton>/scripts/worktree-setup.mjs` from inside the worktree |
 | Paseo | Paseo runs `paseo.json → worktree.setup` itself. The script also reads `paseo.json` when there is no `baton.json`, so one block serves both. |
 
-The script is idempotent: it writes `.baton-worktree-setup.done` only when every line succeeded and skips on the next start; `-Force` reruns. It is a no-op in the main checkout (it compares git's own `--git-dir` and `--git-common-dir`, so path separators cannot fool it). It needs `pwsh` 7+.
+The script is idempotent: it writes `.baton-worktree-setup.done` only when every line succeeded and skips on the next start; `--force` reruns. It is a no-op in the main checkout (it compares git's own `--git-dir` and `--git-common-dir`, so path separators cannot fool it). It needs only Node; each line runs in its own shell, so variables do not carry from one line to the next.
 
-**Evidence outlives stdout.** Every line is also written to `<git-dir>/baton-worktree-setup.log` (inside the main repo's `.git/worktrees/<name>/`: never tracked, nothing to ignore). A long install can outlast a harness's output window, so the agent never sees `done:`. **Do not rerun `-Force` just to see it**: `npm ci` wipes and reinstalls. Read the log, or run without `-Force` (instant `already set up`) and cite the marker.
+**Evidence outlives stdout.** Every line is also written to `<git-dir>/baton-worktree-setup.log` (inside the main repo's `.git/worktrees/<name>/`: never tracked, nothing to ignore). A long install can outlast a harness's output window, so the agent never sees `done:`. **Do not rerun `--force` just to see it**: `npm ci` wipes and reinstalls. Read the log, or run without `--force` (instant `already set up`) and cite the marker.
 
 ## The standard block
 
-Copy into the repo's `baton.json`, keep the lines that apply, delete the rest. Every line is PowerShell, idempotent and safe to rerun. `$env:BATON_SOURCE_CHECKOUT_PATH` is the main checkout (the script also sets `$env:PASEO_SOURCE_CHECKOUT_PATH` to the same path).
+Copy one into the repo's `baton.json`, keep the lines that apply, delete the rest. Every line is idempotent and safe to rerun. `$BATON_SOURCE_CHECKOUT_PATH` is the main checkout (the script also sets `PASEO_SOURCE_CHECKOUT_PATH` to the same path).
+
+**macOS / Linux** (`"shell": "sh"`, the default there):
 
 ```json
 {
   "worktree": {
+    "shell": "sh",
+    "setup": [
+      "for f in .env .env.local; do if [ -f \"$BATON_SOURCE_CHECKOUT_PATH/$f\" ]; then cp \"$BATON_SOURCE_CHECKOUT_PATH/$f\" \"$f\"; fi; done",
+      "mkdir -p .claude; if [ -f \"$BATON_SOURCE_CHECKOUT_PATH/.claude/settings.local.json\" ]; then cp \"$BATON_SOURCE_CHECKOUT_PATH/.claude/settings.local.json\" .claude/; fi",
+      "if [ -d \"$BATON_SOURCE_CHECKOUT_PATH/config\" ]; then mkdir -p config; for f in \"$BATON_SOURCE_CHECKOUT_PATH\"/config/*.local.json; do if [ -f \"$f\" ]; then cp \"$f\" config/; fi; done; fi",
+      "if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; elif [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; elif [ -f package.json ]; then npm install --no-audit --no-fund; fi",
+      "if [ -f composer.json ]; then composer install --no-interaction --prefer-dist; fi",
+      "if [ -f pyproject.toml ] || [ -f requirements.txt ]; then [ -d .venv ] || uv venv .venv >/dev/null; if [ -f uv.lock ]; then uv sync; elif [ -f requirements.txt ]; then uv pip install --python .venv -r requirements.txt; else uv pip install --python .venv -e .; fi; fi",
+      "echo \"[baton setup] env: $([ -f .env ] && echo yes || echo no) node_modules: $([ -d node_modules ] && echo yes || echo no) .venv: $([ -d .venv ] && echo yes || echo no)\""
+    ]
+  }
+}
+```
+
+**Windows** (`"shell": "pwsh"`, the default there; needs PowerShell 7):
+
+```json
+{
+  "worktree": {
+    "shell": "pwsh",
     "setup": [
       "foreach ($f in '.env','.env.local') { if (Test-Path \"$env:BATON_SOURCE_CHECKOUT_PATH\\$f\") { Copy-Item -Force \"$env:BATON_SOURCE_CHECKOUT_PATH\\$f\" $f } }",
       "New-Item -ItemType Directory -Force .claude | Out-Null; if (Test-Path \"$env:BATON_SOURCE_CHECKOUT_PATH\\.claude\\settings.local.json\") { Copy-Item -Force \"$env:BATON_SOURCE_CHECKOUT_PATH\\.claude\\settings.local.json\" .claude\\settings.local.json }",
@@ -32,11 +54,13 @@ Copy into the repo's `baton.json`, keep the lines that apply, delete the rest. E
       "if (Test-Path package-lock.json) { npm ci --no-audit --no-fund } elseif (Test-Path pnpm-lock.yaml) { pnpm install --frozen-lockfile } elseif (Test-Path package.json) { npm install --no-audit --no-fund }",
       "if (Test-Path composer.json) { composer install --no-interaction --prefer-dist }",
       "if ((Test-Path pyproject.toml) -or (Test-Path requirements.txt)) { if (-not (Test-Path .venv)) { uv venv .venv | Out-Null }; if (Test-Path uv.lock) { uv sync } elseif (Test-Path requirements.txt) { uv pip install --python .venv -r requirements.txt } else { uv pip install --python .venv -e . } }",
-      "Write-Host \"[baton setup] env: $(Test-Path .env) local-settings: $(Test-Path .claude\\settings.local.json) node_modules: $(Test-Path node_modules) vendor: $(Test-Path vendor) .venv: $(Test-Path .venv)\""
+      "Write-Host \"[baton setup] env: $(Test-Path .env) node_modules: $(Test-Path node_modules) .venv: $(Test-Path .venv)\""
     ]
   }
 }
 ```
+
+`npm run test:worktree` checks the first block; `FIXTURE_SHELL=pwsh npm run test:worktree` checks the second.
 
 Rules:
 
@@ -69,7 +93,7 @@ Claude Code loads the repo's `CLAUDE.md` in a worktree as in the main checkout. 
 ## Fresh worktree
 
 Missing `node_modules` / `vendor` / `.venv` / `.env`? Run
-`pwsh -File <path-to-baton>/scripts/worktree-setup.ps1` from the worktree root.
+`node <path-to-baton>/scripts/worktree-setup.mjs` from the worktree root.
 It runs this repo's `baton.json → worktree.setup`.
 ```
 
@@ -77,10 +101,10 @@ It runs this repo's `baton.json → worktree.setup`.
 
 ```json
 "SessionStart": [
-  { "hooks": [ { "type": "command", "command": "bash <path-to-baton>/scripts/hooks/worktree-setup-hook.sh", "timeout": 300 } ] }
+  { "hooks": [ { "type": "command", "command": "node <path-to-baton>/scripts/hooks/worktree-setup-hook.mjs", "timeout": 300 } ] }
 ],
 "PostToolUse": [
-  { "matcher": "EnterWorktree", "hooks": [ { "type": "command", "command": "bash <path-to-baton>/scripts/hooks/worktree-setup-hook.sh", "timeout": 300 } ] }
+  { "matcher": "EnterWorktree", "hooks": [ { "type": "command", "command": "node <path-to-baton>/scripts/hooks/worktree-setup-hook.mjs", "timeout": 300 } ] }
 ]
 ```
 
