@@ -25,6 +25,7 @@ import { loadRoster, resolveDispatch, formatReviewDiamond } from '../src/lib/ros
 import { escalationDecision, formatEscalation, APEX_NOUL_THRESHOLD, NOUL_FLOOR } from '../src/lib/triage-gate.mjs';
 import { countActiveNodes } from '../src/lib/capacity.mjs';
 import { listAgents, resolveLauncherName } from '../src/lib/launcher.mjs';
+import { classify } from '../src/lib/offline-classify.mjs';
 import { findAgentForWorktree, pruneDecision, samePath, MIN_PRUNE_AGE_MS } from '../src/lib/worktree-safety.mjs';
 import { auditWorktreeLiveness, SupervisorStateTracker } from '../src/lib/supervisor.mjs';
 import { formatTwoLineSummary } from '../src/lib/preflight.mjs';
@@ -174,6 +175,7 @@ function loadCheckpoint(treePath) {
         node: data.node || '',
         proven: Array.isArray(data.proven) ? data.proven : [],
         next: data.next || '',
+        reviewer: data.reviewer || '',
         blocked: Array.isArray(data.blocked) ? data.blocked : [],
         updated_at: data.updated_at || '',
         status: data.status || ''
@@ -364,7 +366,7 @@ Details: ${desc}`;
   };
 
   const t0 = Date.now();
-  const resp = await queryJev(state, questions);
+  const resp = await classify(state, questions);
   const latency_ms = Date.now() - t0;
 
   const domain = resp.answers.domain?.choice || 'infrastructure';

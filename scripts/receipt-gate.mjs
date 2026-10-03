@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { pathToFileURL } from 'node:url';
+import { classify } from '../src/lib/offline-classify.mjs';
 import { choice, noul, queryJev, projectState } from '../src/lib/typesafe.mjs';
 
 const VALID_NODES = new Set(["cursor", "claude", "opencode", "antigravity", "codex", "perplexity", "dispatcher"]);
@@ -290,7 +291,9 @@ export async function auditReceipt(receiptData, options = {}) {
     })
   };
 
-  const queryFn = options.queryJevFn || queryJev;
+  // No TYPESAFE_API_KEY (or --offline): the offline keyword classifier answers the
+  // same questions. The deterministic checks above run either way.
+  const queryFn = options.queryJevFn || ((st, qs, o) => classify(st, qs, { ...o, offline: options.offline }));
   const { answers, latencyMs, usage, model } = await queryFn(state, questions, {
     timeoutMs: options.timeoutMs ?? 5000
   });
@@ -352,6 +355,7 @@ async function main() {
   const options = {
     file: { type: 'string', short: 'f' },
     json: { type: 'boolean', short: 'j', default: false },
+    offline: { type: 'boolean', default: false },
     help: { type: 'boolean', short: 'h', default: false }
   };
 
@@ -370,6 +374,8 @@ Usage:
 Options:
   -f, --file    Path to receipt.json file
   -j, --json    Output pure JSON for CI or hooks
+      --offline Classify with local keywords even if TYPESAFE_API_KEY is set
+                (used automatically when no key is set)
   -h, --help    Show this help message
 `);
     process.exit(0);
@@ -384,7 +390,7 @@ Options:
     process.exit(1);
   }
 
-  const result = await auditReceipt(receiptContent);
+  const result = await auditReceipt(receiptContent, { offline: values.offline });
 
   if (values.json) {
     console.log(JSON.stringify(result, null, 2));

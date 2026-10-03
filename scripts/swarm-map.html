@@ -1195,7 +1195,7 @@ function layout(d) {
   live.forEach((w, i) => {
     const colX = 90 + (i + 0.5) * colWidth;
     const who = w.agent ? w.agent.name : (w.harness || "unassigned");
-    const reviewer = (w.checkpoint && w.checkpoint.reviewer) || 'claude_orchestrator';
+    const reviewer = (w.checkpoint && w.checkpoint.reviewer) || 'unassigned';
 
     // 1. Writer Node (x, 300)
     nodes.push({
@@ -1672,7 +1672,7 @@ function showDetail(nd) {
   // Reviewer Hand-off Callout
   let reviewCalloutHtml = '';
   if (a.checkpoint && a.checkpoint.status === 'ready-for-review') {
-    const revNode = a.checkpoint.reviewer || 'claude_orchestrator';
+    const revNode = a.checkpoint.reviewer || 'unassigned';
     reviewCalloutHtml = `
       <div class="callout-review">
         <div style="display:flex;align-items:center;justify-content:space-between">
@@ -2136,7 +2136,7 @@ async function executeDispatch() {
         branch,
         goal,
         writer: latestTriageData?.review_diamond?.writer || 'unassigned',
-        reviewer: latestTriageData?.review_diamond?.reviewer || 'claude_orchestrator'
+        reviewer: latestTriageData?.review_diamond?.reviewer || 'unassigned'
       })
     });
     const data = await res.json();
