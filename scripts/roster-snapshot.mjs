@@ -12,6 +12,11 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadProfiles, BINDING_FIELDS } from '../src/lib/roster.mjs';
 
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log('Usage: node scripts/roster-snapshot.mjs   (Paseo users: overwrites roster/profiles.json with the live Paseo profiles)');
+  process.exit(0);
+}
+
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(REPO_ROOT, 'roster', 'profiles.json');
 

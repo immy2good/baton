@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
+import { pathToFileURL } from 'node:url';
 import { choice, noul, queryJev, projectState } from '../src/lib/typesafe.mjs';
 
 const VALID_NODES = new Set(["cursor", "claude", "opencode", "antigravity", "codex", "perplexity", "dispatcher"]);
@@ -409,7 +410,9 @@ Options:
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`.replace(/\\/g, '/')) {
+// pathToFileURL, not a hand-built `file://` string: on Windows the URL is file:///D:/...
+// and the hand-built form never matched, so the CLI silently did nothing.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch(err => {
     console.error("Receipt gate execution failed:", err.message);
     process.exit(1);
