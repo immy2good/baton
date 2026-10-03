@@ -1,0 +1,11 @@
+{
+  "$comment": "Credit-pool health. Billing drives routing, so tiers are keyed on credit pools, not vendors. A pool listed with `dead_until` is skipped by src/lib/roster.mjs until that date passes; a binding matching no entry here is healthy. Matching is by the profile's runtime binding (provider + model prefix), so a new model on a dead pool is dead automatically. Record an outage here -- never by deleting the seat from roster/routing.json, which would lose its fallback chain.",
+  "pools": {
+    "opencode-go": {
+      "provider": "opencode",
+      "model_prefix": "opencode-go/",
+      "dead_until": "2026-09-30",
+      "reason": "Example: subscription monthly usage cap hit. A capped agent may not error -- it can sit `running` forever with no pending permission."
+    }
+  }
+}

@@ -1,0 +1,14 @@
+node_modules/
+.DS_Store
+*.log
+config/*.json
+
+# worktree environment (docs/WORKTREE-ENVIRONMENT.md)
+.baton-worktree-setup.done
+.paseo-worktree-setup.done
+.claude/worktrees/
+
+# local config the worktree contract copies (docs/WORKTREE-ENVIRONMENT.md)
+.env
+.env.local
+.claude/settings.local.json

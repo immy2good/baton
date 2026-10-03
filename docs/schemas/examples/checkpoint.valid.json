@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "ticket": "acme/web-app#1",
+  "node": "claude",
+  "repo": "web-app",
+  "branch": "claude/review-diamond-demo",
+  "goal": "Add input validation to the signup form",
+  "updated_at": "2026-08-17T14:00:00.000Z",
+  "files": ["src/signup.ts"],
+  "proven": ["schema tests pass"],
+  "blocked": [],
+  "next": "assign reviewer to WIP branch",
+  "commit": "pending"
+}

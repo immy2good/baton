@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "ticket": "acme/web-app#1",
+  "node": "opencode",
+  "outcome": "done",
+  "commit": "abc1234",
+  "branch": "claude/review-diamond-demo",
+  "verified": ["schema tests"],
+  "not_verified": ["Live launch in production"],
+  "capture": "nothing durable"
+}

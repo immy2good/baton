@@ -1,0 +1,8 @@
+{
+  "repos": [
+    { "name": "web-app", "path": "/home/you/code/web-app", "slug": "your-org/web-app" },
+    { "name": "api-server", "path": "/home/you/code/api-server", "slug": "your-org/api-server" }
+  ],
+  "worktreeBase": "/home/you/code/worktrees",
+  "protectedBranches": ["main", "master", "develop"]
+}

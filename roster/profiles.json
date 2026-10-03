@@ -1,0 +1,150 @@
+{
+  "$comment": "Agent profiles: the runtime binding for each seat (provider, model, mode, thinking level). Edit to match the agents you run, or point BATON_PROFILES at another file to keep yours private. When Paseo is the launcher its live profiles are used instead; `node scripts/roster-snapshot.mjs` copies them here.",
+  "profiles": [
+    {
+      "id": "agent_profile_t0_staff_engineer",
+      "name": "T0/T1 Staff Engineer (Opus 5 high)",
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "modeId": "bypassPermissions",
+      "thinkingOptionId": "high"
+    },
+    {
+      "id": "agent_profile_t0_apex_reviewer_astra",
+      "name": "T0 Apex Reviewer (GPT-6 Astra high)",
+      "provider": "codex",
+      "model": "gpt-6-astra",
+      "modeId": "auto",
+      "thinkingOptionId": "high"
+    },
+    {
+      "id": "agent_profile_t1_implementer_sol_high",
+      "name": "T1 Implementer (Sol high)",
+      "provider": "codex",
+      "model": "gpt-5.6-sol",
+      "modeId": "auto",
+      "thinkingOptionId": "high"
+    },
+    {
+      "id": "agent_profile_t2_implementer_sol_medium",
+      "name": "T2 Implementer (Sol medium) - risk>=2 default",
+      "provider": "codex",
+      "model": "gpt-5.6-sol",
+      "modeId": "auto",
+      "thinkingOptionId": "medium"
+    },
+    {
+      "id": "agent_profile_t2_implementer_opus_medium",
+      "name": "T2 Implementer (Opus 5 medium)",
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "modeId": "acceptEdits",
+      "thinkingOptionId": "medium"
+    },
+    {
+      "id": "agent_profile_t2_implementer_deepseek_pro",
+      "name": "T2 Implementer (DeepSeek V4 Pro) - risk<=1 default",
+      "provider": "opencode",
+      "model": "opencode-go/deepseek-v4-pro",
+      "modeId": "build",
+      "featureValues": {
+        "auto_accept": true
+      }
+    },
+    {
+      "id": "agent_profile_t2_implementer_kimi",
+      "name": "T2 Implementer (Kimi K2.7 Code)",
+      "provider": "opencode",
+      "model": "opencode-go/kimi-k2.7-code",
+      "modeId": "build",
+      "featureValues": {
+        "auto_accept": true
+      }
+    },
+    {
+      "id": "agent_profile_t2_workhorse_sonnet_high",
+      "name": "T2 Workhorse (Sonnet 5 high)",
+      "provider": "claude",
+      "model": "claude-sonnet-5",
+      "modeId": "acceptEdits",
+      "thinkingOptionId": "high"
+    },
+    {
+      "id": "agent_profile_t2_reviewer_deepseek_plan",
+      "name": "Cross-model Reviewer (DeepSeek V4 Pro, plan)",
+      "provider": "opencode",
+      "model": "opencode-go/deepseek-v4-pro",
+      "modeId": "plan",
+      "featureValues": {
+        "auto_accept": false
+      }
+    },
+    {
+      "id": "agent_profile_t2_reviewer_grok_plan",
+      "name": "Cross-model Reviewer (Grok 4.6, plan)",
+      "provider": "cursor",
+      "model": "grok-4.6",
+      "modeId": "plan",
+      "thinkingOptionId": "high",
+      "featureValues": {
+        "auto_accept": true
+      }
+    },
+    {
+      "id": "agent_profile_t3_fast_sonnet_low",
+      "name": "T3 Fast (Sonnet 5 low)",
+      "provider": "claude",
+      "model": "claude-sonnet-5",
+      "modeId": "acceptEdits",
+      "thinkingOptionId": "low"
+    },
+    {
+      "id": "agent_profile_t3_fast_glm",
+      "name": "T3 Fast (GLM 5.2)",
+      "provider": "opencode",
+      "model": "opencode-go/glm-5.2",
+      "modeId": "build",
+      "featureValues": {
+        "auto_accept": true
+      }
+    },
+    {
+      "id": "agent_profile_t3_coder_composer",
+      "name": "T3/T4 Coder (Composer 2.5)",
+      "provider": "cursor",
+      "model": "composer-2.5",
+      "modeId": "agent",
+      "thinkingOptionId": "low",
+      "featureValues": {
+        "auto_accept": true
+      }
+    },
+    {
+      "id": "agent_profile_t4_bulk_deepseek_flash",
+      "name": "T4 Bulk (DeepSeek V4 Flash) - default",
+      "provider": "opencode",
+      "model": "opencode-go/deepseek-v4-flash",
+      "modeId": "build",
+      "featureValues": {
+        "auto_accept": true
+      }
+    },
+    {
+      "id": "agent_profile_t4_bulk_haiku",
+      "name": "T4 Bulk (Haiku 4.5)",
+      "provider": "claude",
+      "model": "claude-haiku-4-5",
+      "modeId": "acceptEdits"
+    },
+    {
+      "id": "agent_profile_t3_research_pplx",
+      "name": "T3 Research (Perplexity)",
+      "provider": "perplexity",
+      "model": "pplx/search",
+      "modeId": "search",
+      "featureValues": {
+        "auto_accept": true
+      }
+    }
+  ]
+}

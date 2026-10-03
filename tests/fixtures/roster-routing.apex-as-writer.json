@@ -1,0 +1,157 @@
+{
+  "$comment": "Routing policy keyed by agent-profile id (roster/profiles.json, or Paseo's daemon.agentProfiles when Paseo is the launcher). The profiles own the runtime binding (provider/model/modeId/thinkingOptionId); this file owns who may write, who may review, and which family they belong to. Every id here must exist in the profiles or src/lib/roster.mjs throws.",
+  "version": 1,
+  "risk_threshold": 2,
+  "profiles": {
+    "agent_profile_t0_staff_engineer": {
+      "tier": "T0",
+      "family": "anthropic",
+      "roles": [
+        "writer",
+        "reviewer",
+        "gate"
+      ]
+    },
+    "agent_profile_t0_apex_reviewer_astra": {
+      "tier": "T0",
+      "family": "openai",
+      "roles": [
+        "apex"
+      ],
+      "$comment": "Never a writer. Apex reviews work authored BELOW T0 only, and never a same-family author."
+    },
+    "agent_profile_t1_implementer_sol_high": {
+      "tier": "T1",
+      "family": "openai",
+      "roles": [
+        "writer"
+      ]
+    },
+    "agent_profile_t2_implementer_sol_medium": {
+      "tier": "T2",
+      "family": "openai",
+      "roles": [
+        "writer",
+        "reviewer"
+      ]
+    },
+    "agent_profile_t2_implementer_opus_medium": {
+      "tier": "T2",
+      "family": "anthropic",
+      "roles": [
+        "writer"
+      ]
+    },
+    "agent_profile_t2_implementer_deepseek_pro": {
+      "tier": "T2",
+      "family": "deepseek",
+      "roles": [
+        "writer"
+      ]
+    },
+    "agent_profile_t2_implementer_kimi": {
+      "tier": "T2",
+      "family": "moonshot",
+      "roles": [
+        "writer"
+      ]
+    },
+    "agent_profile_t2_workhorse_sonnet_high": {
+      "tier": "T2",
+      "family": "anthropic",
+      "roles": [
+        "writer",
+        "reviewer"
+      ]
+    },
+    "agent_profile_t2_reviewer_deepseek_plan": {
+      "tier": "T2",
+      "family": "deepseek",
+      "roles": [
+        "reviewer",
+        "cross_model"
+      ]
+    },
+    "agent_profile_t2_reviewer_grok_plan": {
+      "tier": "T2",
+      "family": "xai",
+      "roles": [
+        "reviewer",
+        "cross_model"
+      ]
+    },
+    "agent_profile_t3_fast_sonnet_low": {
+      "tier": "T3",
+      "family": "anthropic",
+      "roles": [
+        "writer"
+      ]
+    },
+    "agent_profile_t3_fast_glm": {
+      "tier": "T3",
+      "family": "zhipu",
+      "roles": [
+        "writer"
+      ]
+    },
+    "agent_profile_t3_coder_composer": {
+      "tier": "T3",
+      "family": "cursor",
+      "roles": [
+        "writer"
+      ]
+    },
+    "agent_profile_t4_bulk_deepseek_flash": {
+      "tier": "T4",
+      "family": "deepseek",
+      "roles": [
+        "writer"
+      ]
+    },
+    "agent_profile_t4_bulk_haiku": {
+      "tier": "T4",
+      "family": "anthropic",
+      "roles": [
+        "writer"
+      ]
+    },
+    "agent_profile_t3_research_pplx": {
+      "tier": "T3",
+      "family": "perplexity",
+      "roles": [
+        "research"
+      ]
+    }
+  },
+  "work_type_primary": {
+    "bulk": "agent_profile_t4_bulk_deepseek_flash",
+    "research": "agent_profile_t3_research_pplx",
+    "docs": "agent_profile_t3_fast_sonnet_low"
+  },
+  "domain_primary": {
+    "$comment": "Domain beats the risk default when a domain has a named primary: the specialist you trust most for that kind of work.",
+    "critical_systems": "agent_profile_t0_apex_reviewer_astra",
+    "auth_security": "agent_profile_t2_implementer_sol_medium",
+    "web_ui": "agent_profile_t2_workhorse_sonnet_high"
+  },
+  "risk_default": {
+    "$comment": "Cheaper seat for risk <= 1; stronger seat for risk >= 2.",
+    "low": "agent_profile_t2_implementer_deepseek_pro",
+    "high": "agent_profile_t2_implementer_sol_medium"
+  },
+  "gate": {
+    "two_axis": "agent_profile_t0_staff_engineer",
+    "apex": "agent_profile_t0_apex_reviewer_astra",
+    "cross_model": [
+      "agent_profile_t2_reviewer_deepseek_plan",
+      "agent_profile_t2_reviewer_grok_plan"
+    ]
+  },
+  "legacy_aliases": {
+    "$comment": "Old seat names that still resolve, so older receipts and checkpoints keep working after a rename. Never emitted.",
+    "apex": "agent_profile_t0_apex_reviewer_astra",
+    "orchestrator": "agent_profile_t0_staff_engineer",
+    "bulk": "agent_profile_t4_bulk_deepseek_flash",
+    "reviewer": "agent_profile_t2_reviewer_deepseek_plan"
+  }
+}

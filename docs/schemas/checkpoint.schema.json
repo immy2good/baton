@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:baton:schemas:checkpoint",
+  "title": "Agent bus loop checkpoint",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "ticket",
+    "node",
+    "repo",
+    "branch",
+    "goal",
+    "updated_at",
+    "proven",
+    "blocked",
+    "next"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "ticket": { "type": "string", "minLength": 1 },
+    "node": {
+      "type": "string",
+      "enum": ["cursor", "claude", "opencode", "antigravity", "codex", "perplexity", "other"]
+    },
+    "repo": { "type": "string", "minLength": 1 },
+    "branch": { "type": "string", "minLength": 1 },
+    "goal": { "type": "string", "minLength": 1 },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "files": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "proven": { "type": "array", "items": { "type": "string" } },
+    "blocked": { "type": "array", "items": { "type": "string" } },
+    "next": { "type": "string", "minLength": 1 },
+    "commit": { "type": "string" }
+  }
+}

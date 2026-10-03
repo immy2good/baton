@@ -1,0 +1,2263 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>baton swarm map</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0d14;
+      --bg-panel: rgba(16, 21, 33, 0.82);
+      --bg-card: rgba(22, 29, 46, 0.75);
+      --ink: #f1f5f9;
+      --ink-muted: #94a3b8;
+      --line: #1e293b;
+      --line-glow: rgba(56, 189, 248, 0.25);
+      
+      --c-working: #10b981;
+      --c-review: #3b82f6;
+      --c-merge: #a855f7;
+      --c-dispatch: #f59e0b;
+      --c-jev: #06b6d4;
+      --c-parked: #64748b;
+      --c-dark: #ef4444;
+      --c-memory: #ec4899;
+      --c-mail: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+    code, pre, .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 24px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #06b6d4, #3b82f6, #a855f7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #fff;
+      box-shadow: 0 0 16px rgba(6, 182, 212, 0.4);
+    }
+    .brand-title h1 {
+      font-size: 16px;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .brand-title .sub {
+      font-size: 11px;
+      color: var(--ink-muted);
+    }
+    
+    .status-pills {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      white-space: nowrap;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .pill:hover { border-color: #38bdf8; }
+    .pill.glow {
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.1);
+    }
+    .pill.jev {
+      border-color: rgba(6, 182, 212, 0.4);
+      background: rgba(6, 182, 212, 0.12);
+      color: #38bdf8;
+    }
+    .pill.memory {
+      border-color: rgba(236, 72, 153, 0.4);
+      background: rgba(236, 72, 153, 0.1);
+      color: #f472b6;
+    }
+    .pill.mail {
+      border-color: rgba(245, 158, 11, 0.4);
+      background: rgba(245, 158, 11, 0.12);
+      color: #fbbf24;
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--c);
+    }
+    .pulse {
+      animation: pulse 2.8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.15); opacity: 0.45; }
+    }
+    
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--line);
+      background: var(--bg-card);
+      color: var(--ink);
+      transition: all 0.15s ease;
+    }
+    .btn:hover {
+      background: #1e293b;
+      border-color: #38bdf8;
+    }
+    .btn.primary {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      border: none;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .btn.primary:hover {
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.5);
+    }
+    .btn.danger {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #f87171;
+    }
+    .btn.danger:hover {
+      background: rgba(239, 68, 68, 0.3);
+    }
+    
+    /* Layout */
+    main {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      flex: 1;
+      height: calc(100vh - 61px);
+      overflow: hidden;
+    }
+    @media (max-width: 980px) {
+      main { grid-template-columns: 1fr; }
+      aside { display: none; }
+    }
+    
+    .graph-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: auto;
+      background: radial-gradient(circle at 50% 20%, rgba(30, 41, 59, 0.35) 0%, rgba(10, 13, 20, 1) 100%);
+    }
+    .graph-controls {
+      position: absolute;
+      top: 16px;
+      left: 20px;
+      z-index: 10;
+      display: flex;
+      gap: 8px;
+      background: var(--bg-panel);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+    }
+    .tab-btn {
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink-muted);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      transition: all 0.15s ease;
+    }
+    .tab-btn.active {
+      background: #1e293b;
+      color: #38bdf8;
+      font-weight: 600;
+    }
+    
+    svg {
+      width: 100%;
+      height: 100%;
+      min-width: 900px;
+      min-height: 840px;
+      display: block;
+    }
+    
+    /* Graph SVG Elements */
+    .edge {
+      stroke: var(--line);
+      stroke-width: 1.8;
+      fill: none;
+      transition: stroke 0.3s;
+    }
+    .edge.active {
+      stroke: var(--c-working);
+      stroke-dasharray: 6 6;
+      animation: flow 4.5s linear infinite;
+    }
+    .edge.review {
+      stroke: var(--c-review);
+      stroke-dasharray: 6 6;
+      animation: flow 4.5s linear infinite;
+    }
+    .edge.loop-reject {
+      stroke: rgba(239, 68, 68, 0.7);
+      stroke-width: 2;
+      stroke-dasharray: 6 6;
+      animation: flow-rev 5s linear infinite;
+    }
+    .edge.loop-memory {
+      stroke: rgba(236, 72, 153, 0.7);
+      stroke-width: 1.8;
+      stroke-dasharray: 6 6;
+      animation: flow 5s linear infinite;
+    }
+    .edge.loop-dispatch {
+      stroke: rgba(245, 158, 11, 0.7);
+      stroke-width: 2.2;
+      stroke-dasharray: 8 6;
+      animation: flow-rev 6s linear infinite;
+    }
+    @keyframes flow { to { stroke-dashoffset: -24; } }
+    @keyframes flow-rev { to { stroke-dashoffset: 28; } }
+    
+    .node {
+      cursor: pointer;
+    }
+    .node:hover rect {
+      stroke-width: 3;
+      filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.4));
+    }
+    .node.sel rect {
+      stroke-width: 3;
+      stroke: #38bdf8 !important;
+      filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.6));
+    }
+    .node rect {
+      fill: var(--bg-card);
+      stroke-width: 1.6;
+      rx: 12;
+      transition: stroke-width 0.2s, stroke 0.2s, filter 0.2s;
+    }
+    .node text {
+      fill: var(--ink);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .node .sub {
+      fill: var(--ink-muted);
+      font-size: 11px;
+      font-weight: 400;
+    }
+    
+    /* Right Detail Sidebar */
+    aside {
+      background: var(--bg-panel);
+      border-left: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      backdrop-filter: blur(20px);
+    }
+    .drawer-header {
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .drawer-header h2 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .drawer-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .card-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-muted);
+      margin-bottom: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .kv {
+      display: grid;
+      grid-template-columns: 104px 1fr;
+      gap: 6px 12px;
+      font-size: 13px;
+    }
+    .kv-label {
+      color: var(--ink-muted);
+    }
+    .kv-val {
+      color: var(--ink);
+      word-break: break-all;
+    }
+    
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--c);
+      color: #fff;
+    }
+    .badge-outline {
+      background: transparent;
+      border: 1px solid var(--c);
+      color: var(--c);
+    }
+    
+    ul.checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    ul.checklist li {
+      font-size: 12px;
+      color: var(--ink-muted);
+      line-height: 1.4;
+      display: flex;
+      gap: 6px;
+    }
+    
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #111726;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      width: 580px;
+      max-width: 92vw;
+      max-height: 90vh;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+      overflow-y: auto;
+      animation: pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes pop {
+      from { transform: scale(0.96); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-head h3 { margin: 0; font-size: 16px; font-weight: 700; }
+    .modal-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .input-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-muted);
+      margin-bottom: 6px;
+    }
+    .input-group input, .input-group textarea, .input-group select {
+      width: 100%;
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .input-group input:focus, .input-group textarea:focus, .input-group select:focus {
+      border-color: #38bdf8;
+    }
+    .modal-foot {
+      padding: 14px 20px;
+      background: rgba(15, 23, 42, 0.5);
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .triage-result {
+      display: none;
+      background: #090d16;
+      border: 1px solid #0284c7;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 6px;
+    }
+    .triage-result.show { display: block; }
+    
+    .callout-review {
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .mail-item {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .mail-item.unread {
+      border-color: rgba(245, 158, 11, 0.5);
+      background: rgba(245, 158, 11, 0.05);
+    }
+
+    /* Zoom Controls */
+    .zoom-controls {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-panel);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+    .zoom-btn {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink-muted);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      transition: all 0.15s ease;
+    }
+    .zoom-btn:hover {
+      background: #1e293b;
+      color: #38bdf8;
+    }
+    .zoom-btn.zoom-level {
+      min-width: 48px;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--ink);
+    }
+
+    /* FX Canvas */
+    #fx-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Toast Notifications System */
+    #toast-container {
+      position: fixed;
+      top: 72px;
+      right: 20px;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .toast {
+      pointer-events: auto;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      min-width: 300px;
+      max-width: 420px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--toast-border, #334155);
+      border-radius: 12px;
+      padding: 12px 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px var(--toast-glow, rgba(56, 189, 248, 0.2));
+      transform: translateX(125%);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .toast.show {
+      transform: translateX(0);
+    }
+    .toast.hide {
+      transform: translateX(125%);
+      opacity: 0;
+    }
+    .toast-icon {
+      font-size: 18px;
+      line-height: 1;
+      padding-top: 1px;
+    }
+    .toast-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .toast-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .toast-msg {
+      font-size: 12px;
+      color: var(--ink-muted);
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .toast-progress {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      background: var(--toast-accent, #38bdf8);
+      width: 100%;
+      transform-origin: left;
+      animation: toast-shrink 4s linear forwards;
+    }
+    @keyframes toast-shrink {
+      from { transform: scaleX(1); }
+      to { transform: scaleX(0); }
+    }
+
+    /* Harness Icons & Node Badges */
+    .harness-icon {
+      transition: filter 0.3s ease;
+    }
+    .harness-active {
+      animation: harness-breathe 2.6s ease-in-out infinite alternate;
+    }
+    @keyframes harness-breathe {
+      0% {
+        filter: drop-shadow(0 0 2px currentColor);
+        opacity: 0.88;
+      }
+      100% {
+        filter: drop-shadow(0 0 8px currentColor);
+        opacity: 1;
+      }
+    }
+    .harness-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-logo">Ψ</div>
+    <div class="brand-title">
+      <h1>baton swarm map</h1>
+      <div class="sub">Autonomous Agent Coordination & Review Diamond Bus</div>
+    </div>
+  </div>
+
+  <div class="status-pills">
+    <div class="pill glow"><span class="dot pulse" style="--c:var(--c-working)"></span><span id="launcher-status">Connecting…</span></div>
+    <div class="pill jev"><span class="dot" style="--c:var(--c-jev)"></span><span id="jev-status">Jev: Initializing…</span></div>
+    <div class="pill mail" onclick="openMailModal()" title="View In-House AgentMail Inbox"><span class="dot" style="--c:var(--c-mail)"></span><span id="mail-status">📬 Mail (0)</span></div>
+    <div class="pill" id="supervisor-pill" onclick="triggerSupervisorAudit()" title="Jev Supervisor: Click to run manual liveness sweep" style="cursor:pointer"><span class="dot" style="--c:#38bdf8"></span><span id="supervisor-status">Supervisor: …</span></div>
+    <div class="pill" id="auto-prune-pill" onclick="toggleAutoPrune()" title="Click to toggle automatic background pruning" style="cursor:pointer"><span class="dot" style="--c:#64748b"></span><span id="auto-prune-status">Auto-Prune: …</span></div>
+    <div class="pill memory"><span class="dot" style="--c:var(--c-memory)"></span><span id="memory-status">Memory & Wiki: active</span></div>
+    <div class="pill"><span id="pr-status">Scanning PRs…</span></div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn" onclick="fetchState()">⟳ Refresh</button>
+    <button class="btn primary" onclick="openTriageModal()">⚡ Jev Triage & Dispatch</button>
+  </div>
+</header>
+
+<main>
+  <div class="graph-container" id="graph-container">
+    <div class="graph-controls">
+      <button class="tab-btn active" id="filter-all" onclick="setFilter('all')">All Worktrees</button>
+      <button class="tab-btn" id="filter-active" onclick="setFilter('active')">Active Only</button>
+    </div>
+    <div class="zoom-controls">
+      <button class="zoom-btn" onclick="zoomMap(1.2)" title="Zoom In (Scroll Up)">＋</button>
+      <button class="zoom-btn zoom-level" id="zoom-level-btn" onclick="resetZoom()" title="Reset Zoom">100%</button>
+      <button class="zoom-btn" onclick="zoomMap(0.8)" title="Zoom Out (Scroll Down)">－</button>
+      <button class="zoom-btn" onclick="resetZoom()" title="Fit View">⛶ Fit</button>
+    </div>
+    <canvas id="fx-canvas"></canvas>
+    <svg id="map" viewBox="0 0 1140 860" preserveAspectRatio="xMidYMid meet">
+      <g id="panzoom-layer"></g>
+    </svg>
+  </div>
+
+  <aside id="detail">
+    <div class="drawer-header">
+      <h2 id="d-title">Swarm Hub</h2>
+      <div class="sub" id="d-sub">Select a node on the graph to inspect live worktree and agent state.</div>
+    </div>
+    <div class="drawer-body" id="d-body">
+      <!-- Populated dynamically -->
+    </div>
+  </aside>
+</main>
+
+<!-- Jev Triage & Dispatch Modal -->
+<div class="modal-overlay" id="triage-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>⚡ TypeSafe Jev Dispatch Center</h3>
+      <button class="btn" onclick="closeTriageModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="input-group">
+        <label>Issue Title or Feature Summary</label>
+        <input type="text" id="t-title" placeholder="e.g. Fix rounding in the refund calculation" autofocus>
+      </div>
+      <div class="input-group">
+        <label>Acceptance Criteria / Context (Optional)</label>
+        <textarea id="t-desc" rows="2" placeholder="e.g. Affects live customer refunds. Requires negative control test."></textarea>
+      </div>
+      <div class="triage-result" id="t-result">
+        <!-- Results and Dispatch Form injected here -->
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeTriageModal()">Close</button>
+      <button class="btn primary" id="btn-run-triage" onclick="runJevTriage()">Evaluate with Jev</button>
+    </div>
+  </div>
+</div>
+
+<!-- AgentMail Inbox Modal -->
+<div class="modal-overlay" id="mail-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>📬 In-House AgentMail & Dispatcher Inbox</h3>
+      <button class="btn" onclick="closeMailModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--ink-muted);margin-bottom:8px">
+        Inter-agent handoff notifications and completion announcements.
+      </div>
+      <div id="mail-list" style="display:flex;flex-direction:column;gap:8px;max-height:450px;overflow-y:auto">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+    <div class="modal-foot" style="display:flex;justify-content:space-between">
+      <button class="btn" onclick="ackAllMail()" style="border-color:rgba(52, 211, 153, 0.4);color:#34d399">✓ Mark All Read</button>
+      <button class="btn" onclick="closeMailModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const COLOR = {
+  working: "var(--c-working)",
+  review: "var(--c-review)",
+  merge: "var(--c-merge)",
+  branch: "var(--c-parked)",
+  dispatch: "var(--c-dispatch)",
+  owner: "var(--c-jev)"
+};
+
+let liveState = null;
+let currentFilter = 'all';
+let selectedNodeId = 'dispatch';
+let latestTriageData = null;
+const svg = document.getElementById("map");
+
+const esc = s => String(s ?? "").replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+// --- Web Audio Synthesizer ---
+let audioCtx = null;
+function getAudioContext() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+function playTone(type) {
+  try {
+    const ctx = getAudioContext();
+    const t = ctx.currentTime;
+
+    if (type === 'celebrate') {
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, idx) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'triangle';
+        o.frequency.value = freq;
+        o.connect(g);
+        g.connect(ctx.destination);
+        const start = t + idx * 0.07;
+        g.gain.setValueAtTime(0.12, start);
+        g.gain.exponentialRampToValueAtTime(0.001, start + 0.32);
+        o.start(start);
+        o.stop(start + 0.32);
+      });
+      return;
+    }
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === 'success') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(659.25, t);
+      osc.frequency.setValueAtTime(987.77, t + 0.12);
+      gain.gain.setValueAtTime(0.12, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+      osc.start(t);
+      osc.stop(t + 0.35);
+    } else if (type === 'error') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(146.83, t);
+      osc.frequency.setValueAtTime(138.59, t + 0.12);
+      gain.gain.setValueAtTime(0.15, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+      osc.start(t);
+      osc.stop(t + 0.38);
+    } else if (type === 'warning') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, t);
+      osc.frequency.setValueAtTime(783.99, t + 0.14);
+      gain.gain.setValueAtTime(0.13, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+      osc.start(t);
+      osc.stop(t + 0.32);
+    } else if (type === 'pop') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(900, t);
+      osc.frequency.exponentialRampToValueAtTime(320, t + 0.08);
+      gain.gain.setValueAtTime(0.08, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      osc.start(t);
+      osc.stop(t + 0.08);
+    } else {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, t);
+      osc.frequency.exponentialRampToValueAtTime(880, t + 0.14);
+      gain.gain.setValueAtTime(0.1, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      osc.start(t);
+      osc.stop(t + 0.3);
+    }
+  } catch {}
+}
+
+function showToast(title, msg, type = 'info') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  playTone(type);
+
+  const icons = {
+    success: '✅',
+    error: '🚨',
+    warning: '⚠️',
+    celebrate: '🎉',
+    info: '💡'
+  };
+  const borderColors = {
+    success: 'rgba(52, 211, 153, 0.5)',
+    error: 'rgba(239, 68, 68, 0.6)',
+    warning: 'rgba(245, 158, 11, 0.5)',
+    celebrate: 'rgba(168, 85, 247, 0.6)',
+    info: 'rgba(56, 189, 248, 0.4)'
+  };
+  const glowColors = {
+    success: 'rgba(52, 211, 153, 0.25)',
+    error: 'rgba(239, 68, 68, 0.3)',
+    warning: 'rgba(245, 158, 11, 0.25)',
+    celebrate: 'rgba(168, 85, 247, 0.35)',
+    info: 'rgba(56, 189, 248, 0.2)'
+  };
+  const accents = {
+    success: '#34d399',
+    error: '#f87171',
+    warning: '#fbbf24',
+    celebrate: '#c084fc',
+    info: '#38bdf8'
+  };
+
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.style.setProperty('--toast-border', borderColors[type] || borderColors.info);
+  toast.style.setProperty('--toast-glow', glowColors[type] || glowColors.info);
+  toast.style.setProperty('--toast-accent', accents[type] || accents.info);
+
+  toast.innerHTML = `
+    <div class="toast-icon">${icons[type] || '💡'}</div>
+    <div class="toast-content">
+      <div class="toast-title">${esc(title)}</div>
+      <div class="toast-msg">${esc(msg)}</div>
+    </div>
+    <div class="toast-progress"></div>
+  `;
+
+  toast.onclick = () => {
+    toast.classList.remove('show');
+    toast.classList.add('hide');
+    setTimeout(() => toast.remove(), 250);
+  };
+
+  container.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('show'));
+
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.classList.remove('show');
+      toast.classList.add('hide');
+      setTimeout(() => toast.remove(), 250);
+    }
+  }, 4000);
+}
+
+// --- FX Canvas Animation (Confetti & Shockwaves) ---
+let fxParticles = [];
+let fxShockwaves = [];
+let fxAnimId = null;
+
+function initFxCanvas() {
+  const canvas = document.getElementById('fx-canvas');
+  if (!canvas) return;
+  const resize = () => {
+    canvas.width = canvas.parentElement.clientWidth;
+    canvas.height = canvas.parentElement.clientHeight;
+  };
+  resize();
+  window.addEventListener('resize', resize);
+}
+
+function fireConfetti(x, y) {
+  const canvas = document.getElementById('fx-canvas');
+  if (!canvas) return;
+  const colors = ['#34d399', '#38bdf8', '#a855f7', '#fbbf24', '#f472b6', '#60a5fa', '#facc15'];
+  for (let i = 0; i < 60; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 4 + Math.random() * 8;
+    fxParticles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 3,
+      size: 4 + Math.random() * 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 1,
+      rotation: Math.random() * 360,
+      rotSpeed: (Math.random() - 0.5) * 16,
+      decay: 0.012 + Math.random() * 0.015
+    });
+  }
+  startFxLoop();
+}
+
+function fireShockwave(x, y, color = '#38bdf8') {
+  fxShockwaves.push({
+    x,
+    y,
+    radius: 10,
+    maxRadius: 130,
+    color,
+    alpha: 0.9,
+    width: 4.5
+  });
+  startFxLoop();
+}
+
+function startFxLoop() {
+  if (!fxAnimId) {
+    fxAnimId = requestAnimationFrame(renderFx);
+  }
+}
+
+function renderFx() {
+  const canvas = document.getElementById('fx-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = fxShockwaves.length - 1; i >= 0; i--) {
+    const sw = fxShockwaves[i];
+    sw.radius += 5;
+    sw.alpha *= 0.93;
+    sw.width = Math.max(1, sw.width * 0.95);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = sw.color;
+    ctx.globalAlpha = sw.alpha;
+    ctx.lineWidth = sw.width;
+    ctx.stroke();
+    ctx.restore();
+
+    if (sw.radius >= sw.maxRadius || sw.alpha <= 0.02) {
+      fxShockwaves.splice(i, 1);
+    }
+  }
+
+  for (let i = fxParticles.length - 1; i >= 0; i--) {
+    const p = fxParticles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.24;
+    p.vx *= 0.98;
+    p.rotation += p.rotSpeed;
+    p.alpha -= p.decay;
+
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate((p.rotation * Math.PI) / 180);
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = Math.max(0, p.alpha);
+    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.7);
+    ctx.restore();
+
+    if (p.alpha <= 0) {
+      fxParticles.splice(i, 1);
+    }
+  }
+
+  if (fxParticles.length > 0 || fxShockwaves.length > 0) {
+    fxAnimId = requestAnimationFrame(renderFx);
+  } else {
+    fxAnimId = null;
+  }
+}
+
+// --- Interactive Mind-Map Zoom & Pan ---
+let zoom = 1.0;
+let panX = 0;
+let panY = 0;
+let isPanning = false;
+let panStartX = 0;
+let panStartY = 0;
+
+function initPanZoom() {
+  const container = document.getElementById('graph-container');
+  const svgEl = document.getElementById('map');
+  if (!svgEl || !container) return;
+
+  container.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = container.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    const zoomFactor = e.deltaY < 0 ? 1.12 : 0.89;
+    const newZoom = Math.min(2.8, Math.max(0.35, zoom * zoomFactor));
+
+    panX = mouseX - ((mouseX - panX) * (newZoom / zoom));
+    panY = mouseY - ((mouseY - panY) * (newZoom / zoom));
+    zoom = newZoom;
+
+    applyPanZoom();
+  }, { passive: false });
+
+  svgEl.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.node')) return;
+    isPanning = true;
+    panStartX = e.clientX - panX;
+    panStartY = e.clientY - panY;
+    svgEl.style.cursor = 'grabbing';
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isPanning) return;
+    panX = e.clientX - panStartX;
+    panY = e.clientY - panStartY;
+    applyPanZoom();
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (isPanning) {
+      isPanning = false;
+      svgEl.style.cursor = 'default';
+    }
+  });
+
+  svgEl.addEventListener('dblclick', (e) => {
+    if (e.target.closest('.node')) return;
+    resetZoom();
+  });
+}
+
+function applyPanZoom() {
+  const layer = document.getElementById('panzoom-layer');
+  if (layer) {
+    layer.setAttribute('transform', `translate(${panX}, ${panY}) scale(${zoom})`);
+  }
+  const levelBtn = document.getElementById('zoom-level-btn');
+  if (levelBtn) {
+    levelBtn.textContent = Math.round(zoom * 100) + '%';
+  }
+}
+
+function zoomMap(factor) {
+  const container = document.getElementById('graph-container');
+  const cx = container ? container.clientWidth / 2 : 550;
+  const cy = container ? container.clientHeight / 2 : 400;
+  const newZoom = Math.min(2.8, Math.max(0.35, zoom * factor));
+  panX = cx - ((cx - panX) * (newZoom / zoom));
+  panY = cy - ((cy - panY) * (newZoom / zoom));
+  zoom = newZoom;
+  applyPanZoom();
+}
+
+function resetZoom() {
+  zoom = 1.0;
+  panX = 0;
+  panY = 0;
+  applyPanZoom();
+}
+
+// --- Harness Data & Icon Definitions ---
+function getHarnessData(harnessName) {
+  const h = String(harnessName || '').toLowerCase();
+  if (h.includes('claude')) {
+    return { name: 'Claude', color: '#f59e0b', iconSvg: '<path d="M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5L12 2z" fill="currentColor"/>' };
+  }
+  if (h.includes('codex') || h.includes('openai')) {
+    return { name: 'Codex', color: '#10b981', iconSvg: '<path fill-rule="evenodd" clip-rule="evenodd" d="M22.28 9.82a8.83 8.83 0 0 0-.58-3.9 8.82 8.82 0 0 0-5.74-5.32 8.76 8.76 0 0 0-7.85 1.54 8.77 8.77 0 0 0-6.1-1.12 8.79 8.79 0 0 0-6.4 5.2 8.82 8.82 0 0 0-.58 3.9 8.82 8.82 0 0 0 5.74 5.32 8.76 8.76 0 0 0 7.85-1.54 8.77 8.77 0 0 0 6.1 1.12 8.79 8.79 0 0 0 6.4-5.2ZM12 2c2.4 0 4.5.9 6.2 2.4l-7.7 4.4v8.9l-7.7-4.4V4.4C4.5 2.9 6.6 2 9 2h3zm9.8 11.2c-.4 2-1.6 3.6-3.2 4.6l-3.8-6.6V2.3c2.4.9 4.3 2.7 5.3 5.1 1 2.3.9 5-.1 7.2L12 18.9v-7.6l9.8-5.6v5.5z" fill="currentColor"/>' };
+  }
+  if (h.includes('cursor')) {
+    return { name: 'Cursor', color: '#38bdf8', iconSvg: '<path d="M6 3l12 12-5.5 1L16 22l-3 1-3.5-6-4.5 4.5V3z" fill="currentColor"/>' };
+  }
+  if (h.includes('antigravity') || h.includes('gemini') || h.includes('agy')) {
+    return { name: 'Gemini', color: '#c084fc', iconSvg: '<path d="M12 22C12 16.5 7.5 12 2 12C7.5 12 12 7.5 12 2C12 7.5 16.5 12 22 12C16.5 12 12 16.5 12 22Z" fill="currentColor"/>' };
+  }
+  if (h.includes('deepseek') || h.includes('opencode')) {
+    return { name: 'DeepSeek', color: '#3b82f6', iconSvg: '<path d="M6 3h6c4.97 0 9 4.03 9 9s-4.03 9-9 9H6V3zm3 3v12h3c3.31 0 6-2.69 6-6s-2.69-6-6-6H9z" fill="currentColor"/>' };
+  }
+  if (h.includes('perplexity')) {
+    return { name: 'Perplexity', color: '#06b6d4', iconSvg: '<g fill="currentColor"><circle cx="12" cy="12" r="2.5"/><circle cx="5" cy="7" r="2"/><circle cx="19" cy="7" r="2"/><circle cx="5" cy="17" r="2"/><circle cx="19" cy="17" r="2"/><path d="M12 9.5l-5-2.5M12 9.5l5-2.5M12 14.5l-5 2.5M12 14.5l5 2.5M12 9.5v5" stroke="currentColor" stroke-width="2" fill="none"/></g>' };
+  }
+  if (h.includes('jev') || h.includes('dispatch')) {
+    return { name: 'Jev', color: '#f59e0b', iconSvg: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round"/>' };
+  }
+  if (h.includes('owner') || h.includes('human')) {
+    return { name: 'You', color: '#ec4899', iconSvg: '<path d="M3 21h18v-2H3v2zm1-4h16l-3-9-5 4-5-4-3 9z" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round"/>' };
+  }
+  if (h.includes('memory') || h.includes('wiki')) {
+    return { name: 'Memory', color: '#ec4899', iconSvg: '<path d="M9 4v2c-2 0-4 1-5 2C3 9 3 10 3 11c0 1 1 2 2 3 .5 0 1 1 1 2s-.5 2-1 2c-1 1-1 2-1 3s1 2 2 2h2c1 0 2-1 2-2s1-2 2-2h4c1 0 2 1 2 2s1 2 2 2h2c1 0 2-1 2-2s0-2-1-3c-.5 0-1-1-1-2s.5-2 1-2c1-1 2-2 2-3s0-2-1-3c-1-1-3-2-5-2V4c0-1-2-2-4-2S9 3 9 4z" stroke="currentColor" stroke-width="2" fill="none"/>' };
+  }
+  if (h.includes('git')) {
+    return { name: 'Branch', color: '#64748b', iconSvg: '<g fill="currentColor"><circle cx="7" cy="18" r="2"/><circle cx="7" cy="6" r="2"/><circle cx="17" cy="12" r="2"/><path d="M7 8v8M7 8c0 4 10 0 10 4" stroke="currentColor" stroke-width="2" fill="none"/></g>' };
+  }
+  return { name: 'Worker', color: '#64748b', iconSvg: '<g fill="currentColor"><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/></g>' };
+}
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('filter-' + f).classList.add('active');
+  render();
+}
+
+function layout(d) {
+  let work = d.work || [];
+  if (currentFilter === 'active') {
+    work = work.filter(w => w.gate !== 'branch' || w.dirty || w.agent);
+  }
+  const live = work.filter(w => w.gate !== 'branch' || w.dirty || w.agent);
+  const parked = work.filter(w => w.gate === 'branch' && !w.dirty && !w.agent);
+
+  // Dynamic Horizontal Canvas Dimensions
+  const colWidth = 260;
+  const canvasWidth = Math.max(1200, live.length * colWidth + 180);
+  svg.setAttribute("viewBox", "0 0 " + canvasWidth + " 860");
+
+  const midX = canvasWidth / 2;
+
+  const nodes = [
+    { id: "owner", label: "You (dispatcher)", sub: "Owns singletons · Reviews · Merges", x: midX, y: 56, status: "owner" },
+    { id: "dispatch", label: "Jev Dispatch Gate", sub: "Speculative Fan-out · Diamond Pairing", x: midX, y: 170, status: "dispatch", ref: { kind: "dispatch" } }
+  ];
+
+  // Dynamic column layout
+  live.forEach((w, i) => {
+    const colX = 90 + (i + 0.5) * colWidth;
+    const who = w.agent ? w.agent.name : (w.harness || "unassigned");
+    const reviewer = (w.checkpoint && w.checkpoint.reviewer) || 'claude_orchestrator';
+
+    // 1. Writer Node (x, 300)
+    nodes.push({
+      id: "w" + i,
+      label: who.length > 22 ? who.slice(0, 20) + "…" : who,
+      sub: (w.lane || "worker") + " · " + w.repo,
+      x: colX,
+      y: 300,
+      status: w.gate === 'branch' ? (w.dirty ? 'working' : 'branch') : w.gate,
+      ref: w
+    });
+
+    // 2. Worktree Branch Node (x, 445)
+    nodes.push({
+      id: "t" + i,
+      label: (w.branch || w.head || 'head').slice(0, 24),
+      sub: w.label,
+      x: colX,
+      y: 445,
+      status: w.gate,
+      ref: w,
+      ticket: true
+    });
+
+    // 3. Review Diamond Node (x, 590)
+    const isReady = w.checkpoint && w.checkpoint.status === 'ready-for-review';
+    const isVerified = w.receipt && w.receipt.status === 'verified';
+    nodes.push({
+      id: "r" + i,
+      label: "Review: " + (reviewer.length > 14 ? reviewer.slice(0, 12) + "…" : reviewer),
+      sub: isReady ? "⚡ READY FOR REVIEW" : (isVerified ? "Receipt Verified" : "Diamond Gate"),
+      x: colX,
+      y: 590,
+      status: isReady ? "review" : (isVerified ? "working" : "branch"),
+      ref: { kind: "review-node", worktree: w, reviewer },
+      reviewer,
+      diamond: true
+    });
+  });
+
+  // Bottom Center: Shared Memory & Wiki Node
+  nodes.push({
+    id: "memory",
+    label: "Shared Memory & Wiki",
+    sub: "Durable Knowledge Loop",
+    x: midX,
+    y: 770,
+    status: "owner",
+    ref: { kind: "memory" }
+  });
+
+  if (parked.length && currentFilter !== 'active') {
+    nodes.push({
+      id: "parked",
+      label: "Parked Worktrees (" + parked.length + ")",
+      sub: (d.stats && d.stats.prunable_count ? d.stats.prunable_count + " safe to prune" : "Clean branches"),
+      x: Math.max(160, midX - 360),
+      y: 770,
+      status: "branch",
+      ref: { kind: "parked", list: parked, audit: d.audit || [] }
+    });
+  }
+
+  // --- Real Graph Engineering Loops (Edges) ---
+  const edges = [
+    { from: "owner", to: "dispatch", type: "forward" }
+  ];
+
+  live.forEach((w, i) => {
+    edges.push({ from: "dispatch", to: "w" + i, type: "forward" });
+    edges.push({ from: "w" + i, to: "t" + i, type: "forward" });
+    edges.push({ from: "t" + i, to: "r" + i, type: "forward" });
+    edges.push({ from: "r" + i, to: "w" + i, type: "loop-reject" });
+    edges.push({ from: "r" + i, to: "memory", type: "loop-memory" });
+  });
+
+  edges.push({ from: "memory", to: "dispatch", type: "loop-dispatch" });
+
+  if (parked.length && currentFilter !== 'active') {
+    edges.push({ from: "dispatch", to: "parked", type: "parked" });
+  }
+
+  return { nodes, edges };
+}
+
+function render() {
+  if (!liveState) return;
+  const { nodes, edges } = layout(liveState);
+  const byId = Object.fromEntries(nodes.map(n => [n.id, n]));
+
+  // Prepare PanZoom Viewport Layer
+  let layer = svg.querySelector("#panzoom-layer");
+  if (!layer) {
+    layer = el("g", { id: "panzoom-layer" }, svg);
+  }
+  layer.innerHTML = "";
+
+  // Draw Edges & Loops inside panzoom layer
+  edges.forEach(e => {
+    const A = byId[e.from], B = byId[e.to];
+    if (!A || !B) return;
+
+    if (e.type === "loop-reject") {
+      const arcOffset = 100;
+      const d = "M " + (A.x + 112) + " " + A.y + 
+                " C " + (A.x + 112 + arcOffset) + " " + (A.y - 40) + " " +
+                        (B.x + 112 + arcOffset) + " " + (B.y + 40) + " " +
+                        (B.x + 112) + " " + B.y;
+      el("path", { class: "edge loop-reject", d }, layer);
+      return;
+    }
+
+    if (e.type === "loop-dispatch") {
+      const d = "M " + (A.x - 130) + " " + A.y + 
+                " C " + (A.x - 420) + " " + (A.y - 180) + " " +
+                        (B.x - 420) + " " + (B.y + 180) + " " +
+                        (B.x - 130) + " " + B.y;
+      el("path", { class: "edge loop-dispatch", d }, layer);
+      return;
+    }
+
+    if (e.type === "loop-memory") {
+      const d = "M " + A.x + " " + (A.y + 28) + " C " + A.x + " " + ((A.y + B.y) / 2) + " " + B.x + " " + ((A.y + B.y) / 2) + " " + B.x + " " + (B.y - 28);
+      el("path", { class: "edge loop-memory", d }, layer);
+      return;
+    }
+
+    // Standard Forward Edges
+    const isLive = B.status === "working" || B.status === "review";
+    const cls = "edge" + (isLive ? (B.status === "review" ? " review" : " active") : "");
+    const d = "M " + A.x + " " + (A.y + 28) + " C " + A.x + " " + ((A.y + B.y) / 2) + " " + B.x + " " + ((A.y + B.y) / 2) + " " + B.x + " " + (B.y - 28);
+    el("path", { class: cls, d }, layer);
+  });
+
+  // Draw Nodes inside panzoom layer
+  nodes.forEach(nd => {
+    const isSpecial = nd.id === 'owner' || nd.id === 'dispatch' || nd.id === 'memory' || nd.id === 'parked';
+    const w = isSpecial ? 250 : 224;
+    const h = 56;
+    const c = COLOR[nd.status] || COLOR.branch;
+
+    // Resolve Harness Data & Active State
+    let harness = 'worker';
+    if (nd.id === 'owner') harness = 'owner';
+    else if (nd.id === 'dispatch') harness = 'jev';
+    else if (nd.id === 'memory') harness = 'memory';
+    else if (nd.diamond) harness = nd.reviewer || 'claude';
+    else if (nd.ticket) harness = 'git';
+    else if (nd.ref) {
+      harness = nd.ref.harness || (nd.ref.agent && nd.ref.agent.provider) || 'worker';
+    }
+    const hData = getHarnessData(harness);
+    const isActive = nd.status === "working" || (nd.ref && (nd.ref.dirty || nd.ref.agent)) || (nd.diamond && nd.status === "review");
+
+    const g = el("g", {
+      class: "node" + (selectedNodeId === nd.id ? " sel" : ""),
+      transform: "translate(" + (nd.x - w / 2) + ", " + (nd.y - h / 2) + ")"
+    }, layer);
+
+    // Card Background
+    el("rect", { width: w, height: h, rx: 12, style: "stroke:" + c }, g);
+
+    // Harness Icon Badge (Left) - Stable coordinates, no nested translation mismatch
+    const iconG = el("g", {
+      class: "harness-icon" + (isActive ? " harness-active" : ""),
+      style: `color: ${hData.color}`
+    }, g);
+
+    el("circle", {
+      cx: 24,
+      cy: 28,
+      r: 15,
+      fill: isActive ? `${hData.color}22` : "rgba(30, 41, 59, 0.6)",
+      stroke: isActive ? hData.color : "rgba(255, 255, 255, 0.12)",
+      "stroke-width": isActive ? 1.5 : 1
+    }, iconG);
+
+    if (hData.iconSvg) {
+      const svgWrap = el("g", { transform: "translate(15, 19) scale(0.75)" }, iconG);
+      svgWrap.innerHTML = hData.iconSvg;
+    } else {
+      const iconText = el("text", {
+        x: 24,
+        y: 33,
+        "text-anchor": "middle",
+        fill: hData.color,
+        style: "font-size: 14px; font-weight: 800; font-family: 'Outfit', sans-serif;"
+      }, iconG);
+      iconText.textContent = hData.icon;
+    }
+
+    // Right-side Status Badge Determination
+    let hasBadge = false;
+    let badgeKind = '';
+    let badgeText = '';
+    let badgeColor = hData.color;
+
+    if (nd.ref && nd.ref.supervisor && nd.ref.supervisor.debounced_alert) {
+      hasBadge = true;
+      badgeKind = 'tag';
+      const isPerm = nd.ref.supervisor.bottleneck_cause === 'permission_gate';
+      badgeText = isPerm ? 'BLOCKED ⚠️' : 'STUCK ⚠️';
+      badgeColor = isPerm ? '#ef4444' : '#f59e0b';
+    } else if (nd.ref && nd.ref.receipt) {
+      hasBadge = true;
+      badgeKind = 'receipt';
+    } else if (nd.diamond && nd.status === 'review') {
+      hasBadge = true;
+      badgeKind = 'tag';
+      badgeText = 'READY ⚡';
+      badgeColor = '#38bdf8';
+    } else if (nd.ticket && nd.ref && nd.ref.dirty) {
+      hasBadge = true;
+      badgeKind = 'tag';
+      badgeText = 'DIRTY *';
+      badgeColor = '#f59e0b';
+    } else if (!nd.ticket && !nd.diamond && nd.ref && nd.ref.agent) {
+      hasBadge = true;
+      badgeKind = 'tag';
+      badgeText = 'LIVE ⚡';
+      badgeColor = '#10b981';
+    }
+
+    // Node Text (carefully truncated to avoid overlap)
+    const titleText = el("text", { x: 48, y: 24 }, g);
+    const maxTitleLen = hasBadge ? 14 : (isSpecial ? 24 : 19);
+    titleText.textContent = nd.label.length > maxTitleLen ? nd.label.slice(0, maxTitleLen - 1) + '…' : nd.label;
+
+    const subText = el("text", { x: 48, y: 41, class: "sub" }, g);
+    const maxSubLen = isSpecial ? 38 : (hasBadge ? 18 : 24);
+    subText.textContent = (nd.sub || "").slice(0, maxSubLen);
+
+    if (badgeKind === 'receipt') {
+      const rc = nd.ref.receipt;
+      const rcBadge = el("text", { x: w - 12, y: 24, "text-anchor": "end", style: "font-size:12px" }, g);
+      if (rc.status === 'verified') rcBadge.textContent = "🟢";
+      else if (rc.status === 'breach') rcBadge.textContent = "🚨";
+      else rcBadge.textContent = "🟡";
+    } else if (badgeKind === 'tag') {
+      const badgeG = el("g", { transform: `translate(${w - 58}, 8)` }, g);
+      el("rect", { width: 50, height: 16, rx: 8, fill: `${badgeColor}26`, stroke: badgeColor, "stroke-width": 1 }, badgeG);
+      const bText = el("text", { x: 25, y: 8, "text-anchor": "middle", "dominant-baseline": "central", fill: badgeColor, class: "harness-tag" }, badgeG);
+      bText.textContent = badgeText;
+    }
+
+    g.addEventListener("click", (e) => {
+      e.stopPropagation();
+      selectedNodeId = nd.id;
+
+      // Update node selection highlight in place without wiping SVG DOM
+      svg.querySelectorAll('.node').forEach(n => n.classList.remove('sel'));
+      g.classList.add('sel');
+
+      showDetail(nd);
+
+      // Particle & Audio effects on click
+      const rect = svg.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      if (nd.ref && nd.ref.receipt && nd.ref.receipt.status === 'verified') {
+        fireConfetti(clickX, clickY);
+        playTone('celebrate');
+      } else if (nd.ref && nd.ref.receipt && nd.ref.receipt.status === 'breach') {
+        fireShockwave(clickX, clickY, '#ef4444');
+        playTone('error');
+      } else if (nd.status === 'review') {
+        fireShockwave(clickX, clickY, '#3b82f6');
+        playTone('pop');
+      } else {
+        playTone('pop');
+      }
+    });
+
+    if (selectedNodeId === nd.id) {
+      showDetail(nd);
+    }
+  });
+
+  applyPanZoom();
+}
+
+function showDetail(nd) {
+  const dTitle = document.getElementById("d-title");
+  const dSub = document.getElementById("d-sub");
+  const dBody = document.getElementById("d-body");
+  const a = nd.ref;
+
+  if (nd.id === "owner") {
+    dTitle.innerHTML = "👑 You (dispatcher)";
+    dSub.textContent = "Sole authority for dispatch, merges, and human-held singletons.";
+    dBody.innerHTML = `
+      <div class="card">
+        <div class="card-title">🛡️ Singleton Boundaries</div>
+        <p style="font-size:13px;color:var(--ink-muted);line-height:1.5;margin:0 0 10px">
+          Production deploys, signing keys, licence issuance and live CMS writes are held by a human.
+        </p>
+        <ul class="checklist">
+          <li>✅ Test environments (sandboxes, emulators, demo accounts): delegated to agents.</li>
+          <li>✅ Code changes: agents work in isolated worktrees.</li>
+          <li>✅ Handoffs: <code>checkpoint.json</code> in each worktree root.</li>
+          <li>✅ Apex oversight: high/critical risk requires an apex review when the author is below T0.</li>
+        </ul>
+      </div>
+    `;
+    return;
+  }
+
+  if (nd.id === "memory") {
+    dTitle.innerHTML = "🧠 Shared Memory & Wiki";
+    dSub.textContent = "Where durable knowledge goes when a task completes (the receipt's capture line).";
+    dBody.innerHTML = `
+      <div class="card">
+        <div class="card-title">Loop Mechanics</div>
+        <p style="font-size:12px;color:var(--ink-muted);margin:0">
+          When an issue merges, durable lessons are written to your team's docs or wiki and linked from the receipt, so nothing is lost across credit limits and session resets.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  if (a && a.kind === "dispatch") {
+    dTitle.innerHTML = "⚡ Jev Dispatch Gate";
+    dSub.textContent = "TypeSafe Jev System One sub-second intent and review-diamond pairing.";
+    dBody.innerHTML = `
+      <div class="card">
+        <div class="card-title">🧠 Engine Specifications</div>
+        <div class="kv">
+          <div class="kv-label">Latency</div><div class="kv-val mono" id="jev-lat-detail">~250ms</div>
+          <div class="kv-label">Model</div><div class="kv-val mono">jev-latest</div>
+          <div class="kv-label">Diamond Rule</div><div class="kv-val">Writer & Reviewer NEVER share harness</div>
+          <div class="kv-label">Apex Risk</div><div class="kv-val">Score ≥ 2.0 flags the apex reviewer</div>
+        </div>
+      </div>
+      <button class="btn primary" onclick="openTriageModal()" style="width:100%">⚡ Open Interactive Dispatcher</button>
+    `;
+    return;
+  }
+
+  if (a && a.kind === "review-node") {
+    const w = a.worktree;
+    dTitle.innerHTML = "💎 Review Diamond";
+    dSub.textContent = "Assigned Reviewer: " + a.reviewer;
+    dBody.innerHTML = `
+      <div class="card">
+        <div class="card-title">Review Specifications</div>
+        <div class="kv">
+          <div class="kv-label">Reviewer Seat</div><div class="kv-val mono"><code>${esc(a.reviewer)}</code></div>
+          <div class="kv-label">Branch</div><div class="kv-val mono">${esc(w.branch)}</div>
+          <div class="kv-label">Status</div><div class="kv-val">${esc(w.checkpoint?.status || 'wip')}</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Loop Actions</div>
+        <button class="btn primary" style="width:100%;margin-bottom:8px" onclick="copyReviewCommand('${esc(w.repo)}', '${esc(w.branch)}')">
+          📋 Copy Review Command
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  if (a && a.kind === "parked") {
+    const prunable = (a.audit || []).filter(item => item.isSafeToPrune);
+    dTitle.innerHTML = "📦 Parked Worktrees (" + a.list.length + ")";
+    dSub.textContent = prunable.length + " clean branches safe to prune without data loss.";
+    
+    let pruneListHtml = prunable.map(p => `
+      <li style="display:flex;align-items:center;justify-content:space-between;padding:4px 0">
+        <div>
+          <span class="badge badge-outline" style="--c:var(--c-parked)">${esc(p.repo)}</span>
+          <span class="mono" style="font-size:11px;margin-left:4px">${esc(p.branch)}</span>
+        </div>
+        <button class="btn danger" style="padding:2px 8px;font-size:11px" onclick="pruneWorktree('${esc(p.path)}', '${esc(p.repo)}')">Prune</button>
+      </li>
+    `).join('');
+
+    dBody.innerHTML = `
+      <div class="card" style="border-color:rgba(239, 68, 68, 0.3)">
+        <div class="card-title" style="color:#f87171">🧹 Housekeeping: Safe to Prune (${prunable.length})</div>
+        <p style="font-size:12px;color:var(--ink-muted);margin:0 0 10px">
+          These worktrees have clean git status, no open PRs, and no active agents.
+        </p>
+        ${prunable.length ? `
+          <button class="btn danger" id="btn-prune-all" style="width:100%;margin-bottom:10px;padding:8px" onclick="pruneAllSafeWorktrees()">
+            ⚡ Auto-Prune All Safe (${prunable.length})
+          </button>
+        ` : ''}
+        <ul class="checklist" style="max-height:220px;overflow-y:auto">
+          ${pruneListHtml || '<li style="font-size:12px;color:var(--ink-muted)">No stale worktrees to prune.</li>'}
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-title">All Parked Branches (${a.list.length})</div>
+        <ul class="checklist" style="max-height:240px;overflow-y:auto">
+          ${a.list.map(w => `
+            <li>
+              <span class="badge badge-outline" style="--c:var(--c-parked)">${esc(w.repo)}</span>
+              <span class="mono">${esc(w.branch || w.head)}</span>
+            </li>
+          `).join('')}
+        </ul>
+      </div>
+    `;
+    return;
+  }
+
+  if (!a) return;
+
+  dTitle.innerHTML = esc(nd.label);
+  // Jev Supervisor Advisory Callout
+  let supervisorCalloutHtml = '';
+  if (a.supervisor) {
+    const s = a.supervisor;
+    const isAlert = s.debounced_alert || s.is_deadlocked;
+    const isPerm = s.bottleneck_cause === 'permission_gate';
+    const borderColor = isPerm ? 'rgba(239, 68, 68, 0.6)' : (isAlert ? 'rgba(245, 158, 11, 0.6)' : 'rgba(56, 189, 248, 0.3)');
+    const titleColor = isPerm ? '#f87171' : (isAlert ? '#fbbf24' : '#38bdf8');
+    const badgeText = isPerm ? '⚠️ PERMISSION BLOCKED' : (isAlert ? '⚠️ BOTTLENECK' : '🛡️ HEALTHY');
+
+    supervisorCalloutHtml = `
+      <div class="card" style="border-color:${borderColor};background:rgba(15, 23, 42, 0.6);margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <strong style="color:${titleColor};font-size:12px">⚡ Jev Supervisor Advisory</strong>
+          <span class="badge" style="font-size:10px;--c:${titleColor}">${badgeText}</span>
+        </div>
+        <div style="font-size:12px;margin-bottom:6px;line-height:1.4">
+          <div><strong>Cause:</strong> <code style="color:${titleColor}">${esc(s.bottleneck_cause)}</code></div>
+          <div><strong>Triage:</strong> <code>${esc(s.recommended_triage)}</code></div>
+          <div style="color:var(--ink-muted);margin-top:3px">${esc(s.triage_hint)}</div>
+        </div>
+        <div style="font-size:11px;color:var(--ink-muted);display:flex;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.06);padding-top:4px">
+          <span>Urgency: <strong>${s.urgency}/3</strong></span>
+          <span>Sweeps: <strong>${s.consecutive_count || 1}</strong></span>
+          <span>p(deadlock): <strong>${(s.deadlock_probability || 0).toFixed(2)}</strong></span>
+        </div>
+      </div>
+    `;
+  }
+
+  // Harness Telemetry & Circuit Breaker Callout (Paperclip Steal)
+  let breakerCalloutHtml = '';
+  if (a.circuitBreaker) {
+    const cb = a.circuitBreaker;
+    const isTripped = cb.tripped;
+    const border = isTripped ? 'rgba(239, 68, 68, 0.7)' : 'rgba(16, 185, 129, 0.4)';
+    const statusText = isTripped ? '🛑 TRIPPED' : '🟢 ACTIVE';
+    const statusColor = isTripped ? '#f87171' : '#34d399';
+    breakerCalloutHtml = `
+      <div class="card" style="border-color:${border};background:rgba(15, 23, 42, 0.65);margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <strong style="color:${statusColor};font-size:12px">⚡ Harness Telemetry & Circuit Breaker</strong>
+          <span class="badge" style="font-size:10px;--c:${statusColor}">${statusText}</span>
+        </div>
+        <div style="font-size:12px;margin-bottom:6px;line-height:1.4">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span>Turn Budget:</span>
+            <strong><code style="color:${isTripped ? '#f87171' : 'var(--c-working)'}">${cb.turns} / ${cb.maxTurns}</code></strong>
+          </div>
+          ${cb.consecutiveFailures > 0 ? `<div>Consecutive Failures: <strong style="color:#fbbf24">${cb.consecutiveFailures}</strong></div>` : ''}
+          ${isTripped ? `<div style="color:#f87171;margin-top:4px"><strong>Trip Reason:</strong> ${esc(cb.reason)}</div>` : ''}
+        </div>
+        ${isTripped ? `
+          <button class="btn warning" style="font-size:11px;padding:4px 8px;width:100%;margin-top:4px" onclick="resetCircuitBreaker('${esc(a.path)}')">
+            🔄 Resume / Reset Breaker (+10 Turns)
+          </button>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // Reviewer Hand-off Callout
+  let reviewCalloutHtml = '';
+  if (a.checkpoint && a.checkpoint.status === 'ready-for-review') {
+    const revNode = a.checkpoint.reviewer || 'claude_orchestrator';
+    reviewCalloutHtml = `
+      <div class="callout-review">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <strong style="color:#60a5fa;font-size:13px">🎯 READY FOR REVIEW</strong>
+          <span class="badge" style="--c:var(--c-review)">Diamond Review</span>
+        </div>
+        <div style="font-size:12px;color:var(--ink-muted)">
+          Assigned Reviewer: <code style="color:#93c5fd">${esc(revNode)}</code>
+        </div>
+        <button class="btn primary" style="font-size:12px;padding:6px 10px" onclick="copyReviewCommand('${esc(a.repo)}', '${esc(a.branch)}')">
+          📋 Copy Reviewer Command
+        </button>
+      </div>
+    `;
+  }
+
+  // Checkpoint Card
+  let cpHtml = '';
+  if (a.checkpoint) {
+    cpHtml = `
+      <div class="card" style="border-color:rgba(56, 189, 248, 0.4)">
+        <div class="card-title" style="color:#38bdf8">📋 checkpoint.json</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px">${esc(a.checkpoint.goal || 'No goal declared')}</div>
+        ${a.checkpoint.next ? `<div style="font-size:12px;color:var(--ink-muted);margin-bottom:8px"><strong>Next:</strong> ${esc(a.checkpoint.next)}</div>` : ''}
+        ${a.checkpoint.proven && a.checkpoint.proven.length ? `
+          <div class="card-title" style="margin-top:10px">Proven Verification (${a.checkpoint.proven.length})</div>
+          <ul class="checklist" style="max-height:140px;overflow-y:auto">
+            ${a.checkpoint.proven.map(p => `<li>✅ ${esc(p)}</li>`).join('')}
+          </ul>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // Receipt Gate Card
+  let rcHtml = '';
+  if (a.receipt) {
+    const rc = a.receipt;
+    rcHtml = `
+      <div class="card" style="border-color:${rc.status === 'verified' ? 'rgba(16, 185, 129, 0.4)' : (rc.status === 'breach' ? 'rgba(239, 68, 68, 0.5)' : 'rgba(245, 158, 11, 0.4)')}">
+        <div class="card-title" style="color:${rc.status === 'verified' ? '#34d399' : (rc.status === 'breach' ? '#f87171' : '#fbbf24')}">
+          🛡️ Unfoolable Receipt Gate (${esc(rc.badge)})
+        </div>
+        <div style="font-size:12px;margin-bottom:6px"><strong>Capture:</strong> <code>${esc(rc.capture)}</code></div>
+        <ul class="checklist">
+          <li>${rc.hasNegativeControl ? '✅ Negative control verified' : '⚠️ Missing negative control proof'}</li>
+          <li>${rc.hasSingletonBreach ? '🚨 SINGLETON BREACH DETECTED' : '✅ No singleton breach'}</li>
+        </ul>
+      </div>
+    `;
+  }
+
+  let prHtml = 'None yet';
+  if (a.pr) {
+    prHtml = `<a href="${esc(a.pr.url || ('https://github.com/' + a.repoSlug + '/pull/' + a.pr.number))}" target="_blank" style="color:#38bdf8;font-weight:700">#${a.pr.number} ${esc(a.pr.title)}</a>`;
+  }
+
+  // Worktree-Specific Mail Thread
+  const allMail = (liveState && liveState.mail && liveState.mail.messages) || [];
+  const wtMail = allMail.filter(m => (m.branch && m.branch === a.branch) || (m.worktree && m.worktree === a.path));
+  const wtMailHtml = `
+    <div class="card" style="border-color:rgba(251, 191, 36, 0.3)">
+      <div class="card-title" style="color:#fbbf24;display:flex;justify-content:space-between;align-items:center">
+        <span>📬 Worktree Mail Thread (${wtMail.length})</span>
+        <button class="btn" style="font-size:11px;padding:2px 8px" onclick="toggleWorktreeCompose()">+ New Msg</button>
+      </div>
+      <div id="wt-compose" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);flex-direction:column;gap:6px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <select id="wt-msg-to" style="font-size:11px;padding:4px;background:#0f172a;color:#fff;border:1px solid var(--line);border-radius:4px">
+            <option value="dispatcher">To: dispatcher</option>
+            <option value="reviewer">To: reviewer</option>
+            <option value="writer">To: writer</option>
+            <option value="owner">To: human</option>
+          </select>
+          <select id="wt-msg-type" style="font-size:11px;padding:4px;background:#0f172a;color:#fff;border:1px solid var(--line);border-radius:4px">
+            <option value="ready-for-review">ready-for-review</option>
+            <option value="review-feedback">review-feedback</option>
+            <option value="review-approved">review-approved</option>
+            <option value="credit-handoff">credit-handoff</option>
+            <option value="blocker-help">blocker-help</option>
+            <option value="singleton-escalation">singleton-escalation</option>
+          </select>
+        </div>
+        <input type="text" id="wt-msg-subj" placeholder="Subject" style="font-size:11px;padding:4px 8px;background:#0f172a;color:#fff;border:1px solid var(--line);border-radius:4px">
+        <textarea id="wt-msg-body" rows="2" placeholder="Message body (optional)" style="font-size:11px;padding:4px 8px;background:#0f172a;color:#fff;border:1px solid var(--line);border-radius:4px"></textarea>
+        <button class="btn primary" style="font-size:11px;padding:5px" onclick="sendWorktreeMail('${esc(a.repo)}', '${esc(a.branch)}', '${esc(a.path)}')">🚀 Send to Thread</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:160px;overflow-y:auto">
+        ${wtMail.length ? wtMail.map(m => `
+          <div style="background:#0f172a;border:1px solid var(--line);border-radius:6px;padding:6px;font-size:11px">
+            <div style="display:flex;justify-content:space-between;color:var(--ink-muted)">
+              <span><code>${esc(m.from)}</code> ➔ <code>${esc(m.to)}</code> [${esc(m.type)}]</span>
+              <span class="mono">${esc(m.timestamp ? m.timestamp.slice(11, 19) : '')}</span>
+            </div>
+            <div style="font-weight:600;color:#f1f5f9;margin-top:2px">${esc(m.subject)}</div>
+            ${m.body ? `<div style="color:var(--ink-muted);margin-top:2px">${esc(m.body)}</div>` : ''}
+          </div>
+        `).join('') : '<div style="font-size:12px;color:var(--ink-muted)">No messages recorded for this worktree.</div>'}
+      </div>
+    </div>
+  `;
+
+  dBody.innerHTML = `
+    ${supervisorCalloutHtml}
+    ${breakerCalloutHtml}
+    ${reviewCalloutHtml}
+    <div class="card">
+      <div class="card-title">Worktree Coordinates</div>
+      <div class="kv">
+        <div class="kv-label">Repo</div><div class="kv-val mono">${esc(a.repo)}</div>
+        <div class="kv-label">Branch</div><div class="kv-val mono">${esc(a.branch || '(detached)')}</div>
+        <div class="kv-label">Commit</div><div class="kv-val mono">${esc(a.head || '')}</div>
+        <div class="kv-label">Status</div><div class="kv-val">${a.dirty ? '<span class="badge" style="--c:var(--c-working)">* uncommitted</span>' : '<span class="badge" style="--c:var(--c-parked)">clean</span>'}</div>
+        <div class="kv-label">PR</div><div class="kv-val">${prHtml}</div>
+        ${a.agent ? `<div class="kv-label">Agent</div><div class="kv-val"><strong>${esc(a.agent.name)}</strong> (${esc(a.agent.provider)})</div>` : ''}
+      </div>
+    </div>
+    ${cpHtml}
+    ${rcHtml}
+    ${wtMailHtml}
+    <div style="display:flex;gap:8px">
+      <button class="btn" style="flex:1" onclick="copyText('${esc(a.path)}')">📋 Copy Path</button>
+      <button class="btn" style="flex:1" onclick="copyText('git checkout ${esc(a.branch)}')">🌿 Copy Branch</button>
+    </div>
+  `;
+}
+
+function toggleWorktreeCompose() {
+  const box = document.getElementById('wt-compose');
+  if (box) {
+    box.style.display = box.style.display === 'none' ? 'flex' : 'none';
+  }
+}
+
+async function sendWorktreeMail(repo, branch, worktree) {
+  const to = document.getElementById('wt-msg-to').value;
+  const type = document.getElementById('wt-msg-type').value;
+  const subject = document.getElementById('wt-msg-subj').value.trim();
+  const body = document.getElementById('wt-msg-body').value.trim();
+  if (!subject) { showToast('Subject Required', 'Please enter a subject for the thread message', 'warning'); return; }
+
+  try {
+    const res = await fetch('/api/mail/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to,
+        from: 'swarm-ui',
+        type,
+        subject,
+        body,
+        branch,
+        repo,
+        worktree
+      })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showToast('AgentMail Sent', 'Message posted to thread (' + branch + ')', 'success');
+      fetchState();
+    } else {
+      showToast('Failed to Send', data.error || 'Unknown error', 'error');
+    }
+  } catch (e) {
+    showToast('Error', e.message, 'error');
+  }
+}
+
+function copyText(txt) {
+  navigator.clipboard.writeText(txt);
+  showToast('Copied to Clipboard', txt, 'info');
+}
+
+function copyReviewCommand(repo, branch) {
+  const cmd = "git checkout " + branch + " && npm test";
+  navigator.clipboard.writeText(cmd);
+  showToast('Review Command Copied', 'Run in ' + repo + ':\n' + cmd, 'success');
+}
+
+async function resetCircuitBreaker(path) {
+  try {
+    const res = await fetch('/api/circuit-breaker/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, additionalTurns: 10 })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showToast('Circuit Breaker Reset', 'Granted +10 turns to task worktree.', 'success');
+      fetchState();
+    } else {
+      showToast('Reset Failed', data.error || 'Could not reset breaker', 'error');
+    }
+  } catch (err) {
+    showToast('Network Error', err.message, 'error');
+  }
+}
+
+async function pruneWorktree(path, repo) {
+  if (!confirm('Are you sure you want to remove clean worktree:\n' + path)) return;
+  try {
+    const res = await fetch('/api/prune', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, repo, force: true })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showToast('Worktree Pruned', 'Clean worktree removed successfully', 'success');
+      fetchState();
+    } else {
+      showToast('Prune Failed', data.error || 'Unknown error', 'error');
+    }
+  } catch (err) {
+    showToast('Prune Error', err.message, 'error');
+  }
+}
+
+async function pruneAllSafeWorktrees() {
+  if (!confirm('Auto-prune all safe parked worktrees (clean branches with no open PRs)?')) return;
+  const btn = document.getElementById('btn-prune-all');
+  if (btn) { btn.disabled = true; btn.textContent = 'Pruning safe worktrees…'; }
+  try {
+    const res = await fetch('/api/prune-all', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      showToast('Auto-Prune Complete', 'Cleaned up ' + data.pruned_count + ' safe worktrees!', 'celebrate');
+      fireConfetti(window.innerWidth / 2, 240);
+      fetchState();
+    } else {
+      showToast('Prune Failed', data.error || 'Unknown error', 'error');
+    }
+  } catch (e) {
+    showToast('Prune Error', e.message, 'error');
+  }
+}
+
+async function toggleAutoPrune() {
+  try {
+    const res = await fetch('/api/auto-prune/toggle', { method: 'POST' });
+    const data = await res.json();
+    fetchState();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// --- AgentMail Inbox & Real-Time Wakeup ---
+
+function openMailModal() {
+  document.getElementById('mail-modal').classList.add('open');
+  fetchMailInbox();
+}
+
+function closeMailModal() {
+  document.getElementById('mail-modal').classList.remove('open');
+}
+
+async function fetchMailInbox() {
+  const list = document.getElementById('mail-list');
+  try {
+    const res = await fetch('/api/mail/inbox');
+    const data = await res.json();
+    if (!data.messages || !data.messages.length) {
+      list.innerHTML = '<div style="color:var(--ink-muted);font-size:13px;padding:12px;text-align:center">No messages in inbox.</div>';
+      return;
+    }
+    list.innerHTML = data.messages.map(m => `
+      <div class="mail-item ${m.read ? '' : 'unread'}">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-weight:700;color:${m.read ? 'var(--ink-muted)' : '#fbbf24'};font-size:13px">
+            ${esc(m.subject)}
+          </span>
+          <span class="mono" style="font-size:11px;color:var(--ink-muted)">${m.timestamp.slice(11, 19)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--ink-muted)">
+          From: <code>${esc(m.from)}</code> ➔ To: <code>${esc(m.to)}</code> | Type: <span class="badge" style="--c:var(--c-review)">${esc(m.type)}</span>
+        </div>
+        ${m.branch ? `<div style="font-size:12px">Branch: <code>${esc(m.branch)}</code></div>` : ''}
+        ${m.body ? `<div style="font-size:12px;color:var(--ink)">${esc(m.body)}</div>` : ''}
+        <div style="display:flex;gap:8px;margin-top:6px">
+          ${m.branch ? `<button class="btn primary" style="padding:4px 8px;font-size:11px" onclick="copyReviewCommand('', '${esc(m.branch)}')">📋 Copy Review Command</button>` : ''}
+          ${!m.read ? `<button class="btn" style="padding:4px 8px;font-size:11px" onclick="ackMail('${esc(m.id)}')">Mark Read</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    list.innerHTML = '<div style="color:var(--c-dark);font-size:13px">Failed to load mail.</div>';
+  }
+}
+
+async function ackMail(id) {
+  await fetch('/api/mail/ack', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  });
+  fetchMailInbox();
+  fetchState();
+}
+
+async function ackAllMail() {
+  try {
+    const res = await fetch('/api/mail/ack', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ all: true })
+    });
+    const data = await res.json();
+    showToast('Mail Cleared', `Marked ${data.acked || 0} messages as read`, 'success');
+    fetchMailInbox();
+    fetchState();
+  } catch (err) {
+    showToast('Mail Ack Error', err.message, 'error');
+  }
+}
+
+function initMailSSE() {
+  try {
+    const sse = new EventSource('/api/mail/events');
+    sse.onmessage = (e) => {
+      try {
+        const event = JSON.parse(e.data);
+        if (event.type === 'new_mail' && event.mail) {
+          const m = event.mail;
+          if (m.type === 'ready-for-review') {
+            showToast('🎯 Ready for Review', m.subject + (m.branch ? ' (' + m.branch + ')' : ''), 'celebrate');
+            fireConfetti(window.innerWidth / 2, 220);
+          } else if (m.type === 'auto-prune') {
+            showToast('🧹 Auto-Prune Sweep', m.subject, 'info');
+          } else if (m.type === 'singleton-escalation') {
+            showToast('🚨 Singleton Escalation', m.subject, 'error');
+            fireShockwave(window.innerWidth / 2, 220, '#ef4444');
+          } else {
+            showToast('📬 New AgentMail: ' + m.subject, 'From: ' + m.from + ' ➔ ' + m.to, 'info');
+          }
+        }
+      } catch {}
+      fetchState();
+      const modal = document.getElementById('mail-modal');
+      if (modal && modal.classList.contains('open')) fetchMailInbox();
+    };
+  } catch {}
+}
+
+// --- Jev Quick Triage & Dispatch Modal Logic ---
+
+function openTriageModal() {
+  document.getElementById('triage-modal').classList.add('open');
+  document.getElementById('t-title').focus();
+}
+
+function closeTriageModal() {
+  document.getElementById('triage-modal').classList.remove('open');
+}
+
+async function runJevTriage() {
+  const title = document.getElementById('t-title').value.trim();
+  const desc = document.getElementById('t-desc').value.trim();
+  const btn = document.getElementById('btn-run-triage');
+  const resultBox = document.getElementById('t-result');
+
+  if (!title) return;
+  btn.disabled = true;
+  btn.textContent = 'Analyzing with Jev…';
+
+  try {
+    const res = await fetch('/api/triage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, desc })
+    });
+    latestTriageData = await res.json();
+    
+    // Auto-compute suggested branch
+    const autoBranch = 'feat/' + title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 28);
+    
+    // Default repo: the first one configured in config/swarm-map.json.
+    const repoNames = (liveState && Array.isArray(liveState.repos) && liveState.repos.length) ? liveState.repos : ['baton'];
+    const defaultRepo = repoNames[0];
+
+    resultBox.classList.add('show');
+    resultBox.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span class="badge" style="--c:var(--c-jev)">${esc(latestTriageData.domain)}</span>
+        <span class="mono" style="font-size:11px;color:var(--ink-muted)">${latestTriageData.meta.latency_ms}ms · ${esc(latestTriageData.meta.model)}</span>
+      </div>
+      <div class="kv" style="font-size:12px;margin-bottom:14px">
+        <div class="kv-label">Risk Rating</div>
+        <div class="kv-val">
+          <strong>${latestTriageData.risk_score} / 3.0</strong>
+          ${latestTriageData.requires_apex_review ? '<span class="badge" style="--c:var(--c-dark);margin-left:6px">🚨 Apex Required</span>' : '<span class="badge" style="--c:var(--c-working);margin-left:6px">Standard Review</span>'}
+        </div>
+        <div class="kv-label">Writer Seat</div><div class="kv-val"><code>${esc(latestTriageData.review_diamond.writer)}</code></div>
+        <div class="kv-label">Reviewer</div><div class="kv-val"><code>${esc(latestTriageData.review_diamond.reviewer)}</code></div>
+      </div>
+
+      <!-- Speculative Fan-Out Pre-Flight Gating -->
+      ${latestTriageData.preflight ? `
+        <div style="background:rgba(15, 23, 42, 0.7);border:1px solid rgba(56, 189, 248, 0.3);border-radius:6px;padding:8px 10px;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;color:#38bdf8;margin-bottom:6px;display:flex;justify-content:space-between">
+            <span>⚡ Jev Pre-Flight Invariants</span>
+            <span>Harness Fit: <code>${esc(latestTriageData.preflight.harness_fit)}</code></span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px">
+            <div>Neg Control: ${latestTriageData.preflight.requires_negative_control ? '<span style="color:#fbbf24;font-weight:700">REQUIRED ⚠️</span>' : '<span style="color:var(--ink-muted)">Optional</span>'}</div>
+            <div>Singletons: ${latestTriageData.preflight.touches_singletons ? '<span style="color:#f87171;font-weight:700">HUMAN GATE 🚨</span>' : '<span style="color:#34d399">Clean ✅</span>'}</div>
+            <div>Terminal: ${latestTriageData.preflight.requires_live_environment ? '<span style="color:#38bdf8;font-weight:700">Live env required</span>' : '<span style="color:var(--ink-muted)">Headless</span>'}</div>
+            <div>Review Mode: ${latestTriageData.requires_apex_review ? '<span style="color:#c084fc;font-weight:700">Apex</span>' : '<span style="color:var(--ink-muted)">Standard</span>'}</div>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- One-Click Dispatch Box -->
+      <div style="border-top:1px solid #1e293b;padding-top:12px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:12px;font-weight:700;color:#38bdf8">🚀 Launch Worktree & Seat</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="input-group">
+            <label>Target Repo</label>
+            <select id="disp-repo">
+              ${repoNames.map((r) => `<option value="${esc(r)}" ${r === defaultRepo ? 'selected' : ''}>${esc(r)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Branch Name</label>
+            <input type="text" id="disp-branch" value="${esc(autoBranch)}">
+          </div>
+        </div>
+        <button class="btn primary" id="btn-dispatch-now" onclick="executeDispatch()" style="width:100%">
+          🚀 Launch Isolated Worktree & Initialize Checkpoint
+        </button>
+        <div id="dispatch-msg" style="font-size:12px;display:none"></div>
+      </div>
+    `;
+  } catch (err) {
+    resultBox.classList.add('show');
+    resultBox.innerHTML = `<span style="color:var(--c-dark)">Triage failed: ${esc(err.message)}</span>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Re-Evaluate with Jev';
+  }
+}
+
+async function executeDispatch() {
+  const repoName = document.getElementById('disp-repo').value;
+  const branch = document.getElementById('disp-branch').value.trim();
+  const goal = document.getElementById('t-title').value.trim();
+  const btn = document.getElementById('btn-dispatch-now');
+  const msg = document.getElementById('dispatch-msg');
+
+  if (!branch) { showToast('Branch Required', 'Branch name is required to dispatch worktree', 'warning'); return; }
+  btn.disabled = true;
+  btn.textContent = 'Creating worktree…';
+
+  try {
+    const res = await fetch('/api/dispatch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        repoName,
+        branch,
+        goal,
+        writer: latestTriageData?.review_diamond?.writer || 'unassigned',
+        reviewer: latestTriageData?.review_diamond?.reviewer || 'claude_orchestrator'
+      })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      msg.style.display = 'block';
+      msg.innerHTML = `<span style="color:#34d399">✓ Worktree created: <code>${esc(data.worktreePath)}</code></span>`;
+      btn.textContent = '✓ Worktree Launched';
+      showToast('Worktree Launched', data.worktreePath, 'celebrate');
+      fireConfetti(window.innerWidth / 2, 280);
+      fetchState();
+    } else {
+      msg.style.display = 'block';
+      msg.innerHTML = `<span style="color:#f87171">Launch failed: ${esc(data.error)}</span>`;
+      btn.disabled = false;
+      btn.textContent = 'Retry Launch';
+      showToast('Launch Failed', data.error || 'Unknown error', 'error');
+    }
+  } catch (err) {
+    msg.style.display = 'block';
+    msg.innerHTML = `<span style="color:#f87171">Error: ${esc(err.message)}</span>`;
+    btn.disabled = false;
+    btn.textContent = 'Retry Launch';
+    showToast('Launch Error', err.message, 'error');
+  }
+}
+
+// --- Polling & Initialization ---
+
+async function fetchState() {
+  try {
+    const res = await fetch('/api/state');
+    liveState = await res.json();
+
+    // Update Status Pills
+    const launcherPill = document.getElementById('launcher-status');
+    if (liveState.agentsOk) {
+      launcherPill.textContent = (liveState.launcher || "launcher") + ": " + liveState.stats.connected_agents + " agents";
+    } else {
+      launcherPill.textContent = (liveState.launcher || "launcher") + ": unreadable";
+    }
+
+    document.getElementById('pr-status').textContent = liveState.stats.open_prs + " open PRs";
+    
+    // Mail Pill
+    const mailUnread = liveState.stats.unread_mail || 0;
+    const mailPill = document.getElementById('mail-status');
+    mailPill.textContent = "📬 Mail (" + mailUnread + ")";
+
+    // Supervisor Pill
+    const supPill = document.getElementById('supervisor-pill');
+    const supStatus = document.getElementById('supervisor-status');
+    if (supPill && supStatus && liveState.stats) {
+      const stuck = liveState.stats.stuck_nodes_count || 0;
+      if (stuck > 0) {
+        supStatus.textContent = "⚠️ " + stuck + " Stuck Node" + (stuck > 1 ? "s" : "");
+        supPill.style.borderColor = "rgba(239, 68, 68, 0.6)";
+        supPill.style.color = "#f87171";
+      } else {
+        supStatus.textContent = "🛡️ Supervisor: OK";
+        supPill.style.borderColor = "rgba(56, 189, 248, 0.3)";
+        supPill.style.color = "#38bdf8";
+      }
+    }
+
+    // Auto-Prune Pill
+    const autoPrunePill = document.getElementById('auto-prune-pill');
+    const autoPruneStatus = document.getElementById('auto-prune-status');
+    if (autoPrunePill && autoPruneStatus && liveState.stats) {
+      if (liveState.stats.auto_prune_enabled) {
+        autoPruneStatus.textContent = "Auto-Prune: ON";
+        autoPrunePill.style.borderColor = "rgba(52, 211, 153, 0.4)";
+        autoPrunePill.style.color = "#34d399";
+      } else {
+        autoPruneStatus.textContent = "Auto-Prune: OFF";
+        autoPrunePill.style.borderColor = "var(--line)";
+        autoPrunePill.style.color = "var(--ink-muted)";
+      }
+    }
+
+    render();
+  } catch (e) {
+    console.error("State polling error:", e);
+  }
+}
+
+async function triggerSupervisorAudit() {
+  playTone('pop');
+  showToast('Supervisor Audit', 'Triggering live Jev liveness sweep…', 'info');
+  try {
+    const res = await fetch('/api/supervisor/audit', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      showToast('Supervisor Audit Complete', `Audited ${data.count} worktrees. ${data.alerts?.length || 0} alerts detected.`, data.alerts?.length ? 'warning' : 'success');
+      fetchState();
+    }
+  } catch (err) {
+    showToast('Audit Error', err.message, 'error');
+  }
+}
+
+async function checkJev() {
+  try {
+    const res = await fetch('/api/jev-health');
+    const data = await res.json();
+    const el = document.getElementById('jev-status');
+    if (data.ok) {
+      el.textContent = "Jev: online (" + data.latency_ms + "ms)";
+    } else {
+      el.textContent = "Jev: " + (data.reason || 'offline');
+    }
+  } catch {}
+}
+
+fetchState();
+checkJev();
+initMailSSE();
+initPanZoom();
+initFxCanvas();
+setInterval(fetchState, 5000);
+setInterval(checkJev, 30000);
+</script>
+<div id="toast-container"></div>
+</body>
+</html>

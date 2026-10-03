@@ -1,0 +1,29 @@
+{
+  "name": "baton",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hand a coding job between AI agents without dropping it: checkpoints, cross-model routing, completion gates and worktree safety.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "map": "node scripts/swarm-map.mjs",
+    "agents": "node scripts/agents.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "gate": "node scripts/receipt-gate.mjs",
+    "triage": "node scripts/dispatch-triage.mjs",
+    "test:worktree": "bash tests/worktree-setup-fixture.sh"
+  },
+  "keywords": [
+    "ai-agents",
+    "claude-code",
+    "codex",
+    "cursor",
+    "opencode",
+    "multi-agent",
+    "code-review",
+    "git-worktree"
+  ],
+  "license": "MIT"
+}

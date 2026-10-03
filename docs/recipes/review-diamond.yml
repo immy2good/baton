@@ -1,0 +1,66 @@
+# Review diamond
+
+# Writer and reviewer must be different coding harnesses.
+# The orchestrator coordinates inside its own session; it does not dispatch tickets.
+
+name: review-diamond
+version: 2
+dispatcher: human
+nodes:
+  orchestrator:
+    kind: claude
+    seat: orchestrator
+    claims_tickets: false
+  researcher:
+    kind: perplexity
+    writes_product_code: false
+  writer:
+    kind: claude
+    writes_product_code: true
+    target_kind: antigravity
+  reviewer:
+    kind: opencode
+    writes_product_code: true
+    checkout: writer_wip_branch
+    target_kind: cursor
+    spare: opencode
+    fourth: codex
+  apex_reviewer:
+    kind: codex
+    model: gpt-6-astra
+    fallback_kind: claude
+    fallback_model: claude-fable-5
+    thinking: high
+    seat: chief_inspector
+    writes_product_code: false
+edges:
+  - from: dispatcher
+    to: researcher
+    when: recipe.needs_research
+  - from: researcher
+    to: orchestrator
+    via: github_issue_brief
+  - from: orchestrator
+    to: writer
+    via: worktree
+  - from: writer
+    to: reviewer
+    via: wip_branch
+  - from: reviewer
+    to: apex_reviewer
+    when: task.risk in [HIGH, CRITICAL]
+    via: wip_branch_commit_sha
+  - from: credit_death
+    to: successor
+    via: checkpoint
+    watcher: non_llm
+gates:
+  start: mcp_present
+  stop:
+    - capture_note
+    - receipt_on_issue
+forbidden:
+  - self_claim_ticket
+  - shared_working_tree
+  - singleton_deploy_cms_signing_licenses
+  - claude_reviews_own_wip
