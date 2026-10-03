@@ -21,11 +21,12 @@ const { positionals, values } = parseArgs({
     provider: { type: 'string', default: '' },
     status: { type: 'string', default: 'running' },
     cwd: { type: 'string' },
-    json: { type: 'boolean', default: false }
+    json: { type: 'boolean', default: false },
+    help: { type: 'boolean', short: 'h', default: false }
   }
 });
 
-const cmd = positionals[0];
+const cmd = values.help ? undefined : positionals[0];
 try {
   if (cmd === 'register') {
     const rec = registerAgent({ id: values.id, name: values.name, provider: values.provider, status: values.status, cwd: values.cwd || process.cwd() });
